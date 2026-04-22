@@ -25,10 +25,10 @@ let pool;
 export const connectDB = async () => {
   try {
     pool = await sql.connect(dbConfig);
-    console.log("✅ MSSQL connected successfully");
+    console.log(" MSSQL connected successfully");
     return pool;
   } catch (error) {
-    console.error("❌ MSSQL connection failed:", error.message);
+    console.error(" MSSQL connection failed:", error.message);
     throw error;
   }
 };
