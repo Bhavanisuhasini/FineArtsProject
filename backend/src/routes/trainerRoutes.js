@@ -1,23 +1,21 @@
 import express from "express";
-import {
-  createTrainer,
-  getTrainersByInstitute,   // ✅ updated import
-  updateTrainer,
-  deleteTrainer
-} from "../controllers/trainerController.js";
+import * as controller from "../controllers/trainer.controller.js";
+import auth from "../middlewares/auth.middleware.js";
 
 const router = express.Router();
 
-// ✅ CREATE
-router.post("/", createTrainer);
+router.post("/", auth, controller.createTrainer);
+router.get("/", controller.getAllTrainers);
 
-// ✅ GET by institute (UPDATED ⭐)
-router.get("/:institute_id", getTrainersByInstitute);
+router.get("/my/profile", auth, controller.getMyTrainer);
+router.get("/institute/:instituteId", controller.getByInstitute);
+router.get("/category/:categoryId", controller.getByCategory);
+router.get("/subcategory/:subcategoryId", controller.getBySubcategory);
 
-// ✅ UPDATE
-router.put("/:id", updateTrainer);
+router.get("/:id", controller.getTrainerById);
 
-// ✅ DELETE
-router.delete("/:id", deleteTrainer);
+router.put("/:id", auth, controller.updateTrainer);
+router.post("/:id/upload", auth, controller.uploadMedia);
+router.delete("/:id", auth, controller.deleteTrainer);
 
 export default router;

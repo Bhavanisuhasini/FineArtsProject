@@ -1,97 +1,65 @@
-import { getPool } from "../config/db.js";
+import * as service from "../services/institute.service.js";
+import { success } from "../utils/response.js";
 
-// ✅ CREATE
-export const createInstitute = async (req, res) => {
+export const createInstitute = async (req, res, next) => {
   try {
-    const { subcategory_id, name, location, image_url } = req.body;
-
-    const pool = getPool();
-
-    await pool.request()
-      .input("subcategory_id", subcategory_id)
-      .input("name", name)
-      .input("location", location)
-      .input("image_url", image_url)
-      .query(`
-        INSERT INTO institutes (subcategory_id, name, location, image_url)
-        VALUES (@subcategory_id, @name, @location, @image_url)
-      `);
-
-    res.status(201).json({ message: "Institute created successfully" });
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
+    const data = await service.createInstitute(req.user.id, req.body);
+    success(res, data, "Institute created");
+  } catch (e) { next(e); }
 };
 
-// ✅ GET by subcategory (MAIN API ⭐)
-export const getInstitutesBySubcategory = async (req, res) => {
+export const getAllInstitutes = async (req, res, next) => {
   try {
-    const { subcategory_id } = req.params;
-
-    const pool = getPool();
-
-    const result = await pool.request()
-      .input("subcategory_id", subcategory_id)
-      .query(`
-        SELECT 
-          institute_id,
-          subcategory_id,
-          name,
-          location,
-          image_url
-        FROM institutes
-        WHERE subcategory_id = @subcategory_id
-      `);
-
-    res.json(result.recordset);
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
+    const data = await service.getAllInstitutes();
+    success(res, data);
+  } catch (e) { next(e); }
 };
 
-// ✅ UPDATE
-export const updateInstitute = async (req, res) => {
+export const getInstituteById = async (req, res, next) => {
   try {
-    const { id } = req.params;
-    const { name, location, image_url } = req.body;
-
-    const pool = getPool();
-
-    await pool.request()
-      .input("id", id)
-      .input("name", name)
-      .input("location", location)
-      .input("image_url", image_url)
-      .query(`
-        UPDATE institutes
-        SET name = @name,
-            location = @location,
-            image_url = @image_url
-        WHERE institute_id = @id
-      `);
-
-    res.json({ message: "Institute updated successfully" });
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
+    const data = await service.getInstituteById(req.params.id);
+    success(res, data);
+  } catch (e) { next(e); }
 };
 
-// ✅ DELETE
-export const deleteInstitute = async (req, res) => {
+export const updateInstitute = async (req, res, next) => {
   try {
-    const { id } = req.params;
+    const data = await service.updateInstitute(req.params.id, req.body);
+    success(res, data, "Updated");
+  } catch (e) { next(e); }
+};
 
-    const pool = getPool();
+export const uploadMedia = async (req, res, next) => {
+  try {
+    const data = await service.uploadMedia(req.params.id, req.body);
+    success(res, data, "Uploaded");
+  } catch (e) { next(e); }
+};
 
-    await pool.request()
-      .input("id", id)
-      .query(`
-        DELETE FROM institutes
-        WHERE institute_id = @id
-      `);
+export const getMyInstitute = async (req, res, next) => {
+  try {
+    const data = await service.getMyInstitute(req.user.id);
+    success(res, data);
+  } catch (e) { next(e); }
+};
 
-    res.json({ message: "Institute deleted successfully" });
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
+export const getByCategory = async (req, res, next) => {
+  try {
+    const data = await service.getByCategory(req.params.categoryId);
+    success(res, data);
+  } catch (e) { next(e); }
+};
+
+export const filterInstitutes = async (req, res, next) => {
+  try {
+    const data = await service.filterInstitutes(req.query);
+    success(res, data);
+  } catch (e) { next(e); }
+};
+
+export const deleteInstitute = async (req, res, next) => {
+  try {
+    await service.deleteInstitute(req.params.id);
+    success(res, null, "Deactivated");
+  } catch (e) { next(e); }
 };

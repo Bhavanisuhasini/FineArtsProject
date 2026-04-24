@@ -1,23 +1,17 @@
 import express from "express";
-import {
-  createInstitute,
-  getInstitutesBySubcategory,
-  updateInstitute,
-  deleteInstitute
-} from "../controllers/instituteController.js";
+import * as controller from "../controllers/institute.controller.js";
+import auth from "../middlewares/auth.middleware.js";
 
 const router = express.Router();
 
-// CREATE
-router.post("/", createInstitute);
-
-// GET by subcategory ⭐ (MAIN)
-router.get("/:subcategory_id", getInstitutesBySubcategory);
-
-// UPDATE
-router.put("/:id", updateInstitute);
-
-// DELETE
-router.delete("/:id", deleteInstitute);
+router.post("/", auth, controller.createInstitute);
+router.get("/", controller.getAllInstitutes);
+router.get("/my/profile", auth, controller.getMyInstitute);
+router.get("/category/:categoryId", controller.getByCategory);
+router.get("/filter", controller.filterInstitutes);
+router.get("/:id", controller.getInstituteById);
+router.put("/:id", auth, controller.updateInstitute);
+router.post("/:id/upload", auth, controller.uploadMedia);
+router.delete("/:id", auth, controller.deleteInstitute);
 
 export default router;

@@ -1,225 +1,103 @@
 import { getPool, sql } from "../config/db.js";
 
-export const getAllSubcategoriesService = async () => {
+export const createSubcategory = async ({ category_id, name, description, image }) => {
+  const pool = getPool();
+
+  // check category exists
+  const check = await pool.request()
+    .input("category_id", sql.Int, category_id)
+    .query("SELECT id FROM categories WHERE id = @category_id");
+
+  if (!check.recordset.length) {
+    throw new Error("Category not found");
+  }
+
+  const result = await pool.request()
+    .input("category_id", sql.Int, category_id)
+    .input("name", sql.NVarChar, name)
+    .input("description", sql.NVarChar, description)
+    .input("image", sql.NVarChar, image)
+    .query(`
+      INSERT INTO subcategories (category_id, name, description, image)
+      OUTPUT INSERTED.*
+      VALUES (@category_id, @name, @description, @image)
+    `);
+
+  return result.recordset[0];
+};
+
+export const getAllSubcategories = async () => {
   const pool = getPool();
 
   const result = await pool.request().query(`
-    SELECT 
-      s.id,
-      s.category_id,
-      c.name AS category_name,
-      s.name,
-      s.description,
-      s.image_url,
-      s.is_active,
-      s.created_at,
-      s.updated_at
-    FROM subcategories s
-    INNER JOIN categories c ON s.category_id = c.id
-    WHERE s.is_active = 1
-    ORDER BY s.id DESC
+    SELECT sc.*, c.name AS category_name
+    FROM subcategories sc
+    JOIN categories c ON sc.category_id = c.id
+    WHERE sc.is_active = 1
+    ORDER BY sc.created_at DESC
   `);
 
   return result.recordset;
 };
 
-export const getSubcategoryByIdService = async (id) => {
+export const getSubcategoryById = async (id) => {
   const pool = getPool();
 
   const result = await pool.request()
-    .input("id", sql.BigInt, id)
+    .input("id", sql.Int, id)
     .query(`
-      SELECT 
-        s.id,
-        s.category_id,
-        c.name AS category_name,
-        s.name,
-        s.description,
-        s.image_url,
-        s.is_active,
-        s.created_at,
-        s.updated_at
-      FROM subcategories s
-      INNER JOIN categories c ON s.category_id = c.id
-      WHERE s.id = @id AND s.is_active = 1
+      SELECT sc.*, c.name AS category_name
+      FROM subcategories sc
+      JOIN categories c ON sc.category_id = c.id
+      WHERE sc.id = @id
     `);
+
+  if (!result.recordset.length) {
+    throw new Error("Subcategory not found");
+  }
 
   return result.recordset[0];
 };
 
-export const getSubcategoriesByCategoryIdService = async (categoryId) => {
+export const getSubcategoriesByCategory = async (categoryId) => {
   const pool = getPool();
 
   const result = await pool.request()
-    .input("categoryId", sql.BigInt, categoryId)
+    .input("categoryId", sql.Int, categoryId)
     .query(`
-      SELECT 
-        s.id,
-        s.category_id,
-        s.name,
-        s.description,
-        s.image_url,
-        s.is_active,
-        s.created_at,
-        s.updated_at
-      FROM subcategories s
-      WHERE s.category_id = @categoryId
-        AND s.is_active = 1
-      ORDER BY s.id DESC
+      SELECT * FROM subcategories
+      WHERE category_id = @categoryId AND is_active = 1
     `);
 
   return result.recordset;
 };
 
-export const createSubcategoryService = async ({
-  category_id,
-  name,
-  description,
-  image_url,
-}) => {
+export const updateSubcategory = async (id, { category_id, name, description, image }) => {
   const pool = getPool();
-
-  const categoryCheck = await pool.request()
-    .input("category_id", sql.BigInt, category_id)
-    .query(`
-      SELECT id, name
-      FROM categories
-      WHERE id = @category_id AND is_active = 1
-    `);
-
-  if (categoryCheck.recordset.length === 0) {
-    throw new Error("Category not found");
-  }
-
-  const existing = await pool.request()
-    .input("category_id", sql.BigInt, category_id)
-    .input("name", sql.NVarChar(100), name)
-    .query(`
-      SELECT id
-      FROM subcategories
-      WHERE category_id = @category_id AND name = @name
-    `);
-
-  if (existing.recordset.length > 0) {
-    throw new Error("Subcategory already exists under this category");
-  }
-
-  const result = await pool.request()
-    .input("category_id", sql.BigInt, category_id)
-    .input("name", sql.NVarChar(100), name)
-    .input("description", sql.NVarChar(500), description || null)
-    .input("image_url", sql.NVarChar(500), image_url || null)
-    .query(`
-      INSERT INTO subcategories (category_id, name, description, image_url)
-      OUTPUT INSERTED.*
-      VALUES (@category_id, @name, @description, @image_url)
-    `);
-
-  return result.recordset[0];
-};
-
-export const updateSubcategoryService = async (
-  id,
-  { category_id, name, description, image_url, is_active }
-) => {
-  const pool = getPool();
-
-  const checkSubcategory = await pool.request()
-    .input("id", sql.BigInt, id)
-    .query(`
-      SELECT *
-      FROM subcategories
-      WHERE id = @id
-    `);
-
-  if (checkSubcategory.recordset.length === 0) {
-    throw new Error("Subcategory not found");
-  }
-
-  const oldSubcategory = checkSubcategory.recordset[0];
-
-  const updatedCategoryId = category_id ?? oldSubcategory.category_id;
-  const updatedName = name ?? oldSubcategory.name;
-  const updatedDescription = description ?? oldSubcategory.description;
-  const updatedImageUrl = image_url ?? oldSubcategory.image_url;
-  const updatedIsActive =
-    typeof is_active === "boolean" ? is_active : oldSubcategory.is_active;
-
-  const categoryCheck = await pool.request()
-    .input("category_id", sql.BigInt, updatedCategoryId)
-    .query(`
-      SELECT id
-      FROM categories
-      WHERE id = @category_id AND is_active = 1
-    `);
-
-  if (categoryCheck.recordset.length === 0) {
-    throw new Error("Category not found");
-  }
-
-  const duplicate = await pool.request()
-    .input("id", sql.BigInt, id)
-    .input("category_id", sql.BigInt, updatedCategoryId)
-    .input("name", sql.NVarChar(100), updatedName)
-    .query(`
-      SELECT id
-      FROM subcategories
-      WHERE category_id = @category_id
-        AND name = @name
-        AND id <> @id
-    `);
-
-  if (duplicate.recordset.length > 0) {
-    throw new Error("Another subcategory with this name already exists under this category");
-  }
-
-  const result = await pool.request()
-    .input("id", sql.BigInt, id)
-    .input("category_id", sql.BigInt, updatedCategoryId)
-    .input("name", sql.NVarChar(100), updatedName)
-    .input("description", sql.NVarChar(500), updatedDescription)
-    .input("image_url", sql.NVarChar(500), updatedImageUrl)
-    .input("is_active", sql.Bit, updatedIsActive)
-    .query(`
-      UPDATE subcategories
-      SET
-        category_id = @category_id,
-        name = @name,
-        description = @description,
-        image_url = @image_url,
-        is_active = @is_active,
-        updated_at = SYSDATETIME()
-      OUTPUT INSERTED.*
-      WHERE id = @id
-    `);
-
-  return result.recordset[0];
-};
-
-export const deleteSubcategoryService = async (id) => {
-  const pool = getPool();
-
-  const checkSubcategory = await pool.request()
-    .input("id", sql.BigInt, id)
-    .query(`
-      SELECT *
-      FROM subcategories
-      WHERE id = @id
-    `);
-
-  if (checkSubcategory.recordset.length === 0) {
-    throw new Error("Subcategory not found");
-  }
 
   await pool.request()
-    .input("id", sql.BigInt, id)
+    .input("id", sql.Int, id)
+    .input("category_id", sql.Int, category_id)
+    .input("name", sql.NVarChar, name)
+    .input("description", sql.NVarChar, description)
+    .input("image", sql.NVarChar, image)
     .query(`
       UPDATE subcategories
-      SET
-        is_active = 0,
-        updated_at = SYSDATETIME()
+      SET category_id = @category_id,
+          name = @name,
+          description = @description,
+          image = @image,
+          updated_at = GETDATE()
       WHERE id = @id
     `);
 
-  return true;
+  return { id, category_id, name, description, image };
+};
+
+export const deleteSubcategory = async (id) => {
+  const pool = getPool();
+
+  await pool.request()
+    .input("id", sql.Int, id)
+    .query(`DELETE FROM subcategories WHERE id = @id`);
 };
