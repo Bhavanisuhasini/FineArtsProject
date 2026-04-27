@@ -259,4 +259,4 @@ export const addTrainerByInstituteService = async (instituteId, body) => {
     `);
 
   return trainer;
-};
+};//just for change
