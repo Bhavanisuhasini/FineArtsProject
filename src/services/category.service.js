@@ -1,28 +1,5 @@
 import { getPool, sql } from "../config/db.js";
 
-<<<<<<< HEAD
-export const createCategory = async ({ name, description, image }) => {
-  const pool = getPool();
-
-  const result = await pool.request()
-    .input("name", sql.NVarChar, name)
-    .input("description", sql.NVarChar, description)
-    .input("image", sql.NVarChar, image)
-    .query(`
-      INSERT INTO categories (name, description, image)
-      OUTPUT INSERTED.*
-      VALUES (@name, @description, @image)
-    `);
-
-  return result.recordset[0];
-};
-
-export const getAllCategories = async () => {
-  const pool = getPool();
-
-  const result = await pool.request()
-    .query(`SELECT * FROM categories WHERE is_active = 1 ORDER BY created_at DESC`);
-=======
 export const getAllCategoriesService = async () => {
   const pool = getPool();
 
@@ -39,23 +16,11 @@ export const getAllCategoriesService = async () => {
     WHERE is_active = 1
     ORDER BY id DESC
   `);
->>>>>>> fbc6bb9d95aea3274d175f3a93127200a57e1dd2
+
 
   return result.recordset;
 };
 
-<<<<<<< HEAD
-export const getCategoryById = async (id) => {
-  const pool = getPool();
-
-  const result = await pool.request()
-    .input("id", sql.Int, id)
-    .query(`SELECT * FROM categories WHERE id = @id`);
-
-  if (!result.recordset.length) {
-    throw new Error("Category not found");
-  }
-=======
 export const getCategoryByIdService = async (id) => {
   const pool = getPool();
 
@@ -73,39 +38,9 @@ export const getCategoryByIdService = async (id) => {
       FROM categories
       WHERE id = @id AND is_active = 1
     `);
->>>>>>> fbc6bb9d95aea3274d175f3a93127200a57e1dd2
 
   return result.recordset[0];
 };
-
-<<<<<<< HEAD
-export const updateCategory = async (id, { name, description, image }) => {
-  const pool = getPool();
-
-  await pool.request()
-    .input("id", sql.Int, id)
-    .input("name", sql.NVarChar, name)
-    .input("description", sql.NVarChar, description)
-    .input("image", sql.NVarChar, image)
-    .query(`
-      UPDATE categories
-      SET name = @name,
-          description = @description,
-          image = @image,
-          updated_at = GETDATE()
-      WHERE id = @id
-    `);
-
-  return { id, name, description, image };
-};
-
-export const deleteCategory = async (id) => {
-  const pool = getPool();
-
-  await pool.request()
-    .input("id", sql.Int, id)
-    .query(`DELETE FROM categories WHERE id = @id`);
-=======
 export const createCategoryService = async ({ name, description, image_url }) => {
   const pool = getPool();
 
@@ -218,5 +153,4 @@ export const deleteCategoryService = async (id) => {
     `);
 
   return true;
->>>>>>> fbc6bb9d95aea3274d175f3a93127200a57e1dd2
 };

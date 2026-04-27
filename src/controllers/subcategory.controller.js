@@ -6,15 +6,7 @@ import {
   updateSubcategoryService,
   deleteSubcategoryService,
 } from "../services/subcategory.service.js";
-<<<<<<< HEAD
 
-export const getAllSubcategories = async (req, res) => {
-  try {
-    const data = await getAllSubcategoriesService();
-    res.json({ success: true, message: "Subcategories fetched", data });
-  } catch (error) {
-    res.status(500).json({ success: false, message: error.message });
-=======
 import { successResponse, errorResponse } from "../utils/response.js";
 
 export const getAllSubcategories = async (req, res) => {
@@ -28,28 +20,13 @@ export const getAllSubcategories = async (req, res) => {
       200
     );
   } catch (error) {
-    console.error("getAllSubcategories error:", error.message);
     return errorResponse(res, "Failed to fetch subcategories", error.message, 500);
->>>>>>> fbc6bb9d95aea3274d175f3a93127200a57e1dd2
   }
 };
 
 export const getSubcategoryById = async (req, res) => {
   try {
-<<<<<<< HEAD
-    const data = await getSubcategoryByIdService(req.params.id);
-
-    if (!data) {
-      return res.status(404).json({ success: false, message: "Subcategory not found" });
-    }
-
-    res.json({ success: true, message: "Subcategory fetched", data });
-  } catch (error) {
-    res.status(500).json({ success: false, message: error.message });
-=======
-    const { id } = req.params;
-
-    const subcategory = await getSubcategoryByIdService(id);
+    const subcategory = await getSubcategoryByIdService(req.params.id);
 
     if (!subcategory) {
       return errorResponse(res, "Subcategory not found", null, 404);
@@ -62,23 +39,15 @@ export const getSubcategoryById = async (req, res) => {
       200
     );
   } catch (error) {
-    console.error("getSubcategoryById error:", error.message);
     return errorResponse(res, "Failed to fetch subcategory", error.message, 500);
->>>>>>> fbc6bb9d95aea3274d175f3a93127200a57e1dd2
   }
 };
 
 export const getSubcategoriesByCategoryId = async (req, res) => {
   try {
-<<<<<<< HEAD
-    const data = await getSubcategoriesByCategoryIdService(req.params.categoryId);
-    res.json({ success: true, message: "Subcategories by category fetched", data });
-  } catch (error) {
-    res.status(500).json({ success: false, message: error.message });
-=======
-    const { categoryId } = req.params;
-
-    const subcategories = await getSubcategoriesByCategoryIdService(categoryId);
+    const subcategories = await getSubcategoriesByCategoryIdService(
+      req.params.categoryId
+    );
 
     return successResponse(
       res,
@@ -87,26 +56,18 @@ export const getSubcategoriesByCategoryId = async (req, res) => {
       200
     );
   } catch (error) {
-    console.error("getSubcategoriesByCategoryId error:", error.message);
     return errorResponse(
       res,
       "Failed to fetch subcategories by category",
       error.message,
       500
     );
->>>>>>> fbc6bb9d95aea3274d175f3a93127200a57e1dd2
   }
 };
 
 export const createSubcategory = async (req, res) => {
   try {
-<<<<<<< HEAD
-    const data = await createSubcategoryService(req.body);
-    res.status(201).json({ success: true, message: "Subcategory created", data });
-  } catch (error) {
-    res.status(400).json({ success: false, message: error.message });
-=======
-    const { category_id, name, description, image_url } = req.body;
+    const { category_id, name, description, image, image_url } = req.body;
 
     if (!category_id) {
       return errorResponse(res, "category_id is required", null, 400);
@@ -120,7 +81,7 @@ export const createSubcategory = async (req, res) => {
       category_id,
       name: name.trim(),
       description,
-      image_url,
+      image: image || image_url || null,
     });
 
     return successResponse(
@@ -130,8 +91,6 @@ export const createSubcategory = async (req, res) => {
       201
     );
   } catch (error) {
-    console.error("createSubcategory error:", error.message);
-
     if (
       error.message === "Category not found" ||
       error.message === "Subcategory already exists under this category"
@@ -140,26 +99,18 @@ export const createSubcategory = async (req, res) => {
     }
 
     return errorResponse(res, "Failed to create subcategory", error.message, 500);
->>>>>>> fbc6bb9d95aea3274d175f3a93127200a57e1dd2
   }
 };
 
 export const updateSubcategory = async (req, res) => {
   try {
-<<<<<<< HEAD
-    const data = await updateSubcategoryService(req.params.id, req.body);
-    res.json({ success: true, message: "Subcategory updated", data });
-  } catch (error) {
-    res.status(400).json({ success: false, message: error.message });
-=======
-    const { id } = req.params;
-    const { category_id, name, description, image_url, is_active } = req.body;
+    const { category_id, name, description, image, image_url, is_active } = req.body;
 
-    const updatedSubcategory = await updateSubcategoryService(id, {
+    const updatedSubcategory = await updateSubcategoryService(req.params.id, {
       category_id,
       name: name?.trim(),
       description,
-      image_url,
+      image: image || image_url || null,
       is_active,
     });
 
@@ -170,8 +121,6 @@ export const updateSubcategory = async (req, res) => {
       200
     );
   } catch (error) {
-    console.error("updateSubcategory error:", error.message);
-
     if (
       error.message === "Subcategory not found" ||
       error.message === "Category not found"
@@ -187,31 +136,19 @@ export const updateSubcategory = async (req, res) => {
     }
 
     return errorResponse(res, "Failed to update subcategory", error.message, 500);
->>>>>>> fbc6bb9d95aea3274d175f3a93127200a57e1dd2
   }
 };
 
 export const deleteSubcategory = async (req, res) => {
   try {
-<<<<<<< HEAD
     await deleteSubcategoryService(req.params.id);
-    res.json({ success: true, message: "Subcategory deleted" });
-  } catch (error) {
-    res.status(400).json({ success: false, message: error.message });
-=======
-    const { id } = req.params;
-
-    await deleteSubcategoryService(id);
 
     return successResponse(res, "Subcategory deleted successfully", null, 200);
   } catch (error) {
-    console.error("deleteSubcategory error:", error.message);
-
     if (error.message === "Subcategory not found") {
       return errorResponse(res, error.message, null, 404);
     }
 
     return errorResponse(res, "Failed to delete subcategory", error.message, 500);
->>>>>>> fbc6bb9d95aea3274d175f3a93127200a57e1dd2
   }
 };

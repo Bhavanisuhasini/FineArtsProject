@@ -1,9 +1,5 @@
 {
-<<<<<<< HEAD
-  "name": "backend",
-=======
   "name": "finearts",
->>>>>>> fbc6bb9d95aea3274d175f3a93127200a57e1dd2
   "version": "1.0.0",
   "description": "",
   "main": "server.js",
@@ -17,23 +13,11 @@
   "license": "ISC",
   "type": "module",
   "dependencies": {
-<<<<<<< HEAD
-    "bcryptjs": "^3.0.3",
-    "cors": "^2.8.6",
-    "dotenv": "^17.4.2",
-    "express": "^5.2.1",
-    "firebase-admin": "^13.8.0",
-    "helmet": "^8.1.0",
-    "jsonwebtoken": "^9.0.3",
-    "morgan": "^1.10.1",
-    "mssql": "^12.3.1",
-    "pg": "^8.20.0"
-=======
+
     "cors": "^2.8.6",
     "dotenv": "^17.4.2",
     "express": "^5.2.1",
     "mssql": "^12.3.1"
->>>>>>> fbc6bb9d95aea3274d175f3a93127200a57e1dd2
   },
   "devDependencies": {
     "nodemon": "^3.1.14"

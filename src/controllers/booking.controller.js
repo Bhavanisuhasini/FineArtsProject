@@ -1,6 +1,5 @@
 import * as service from "../services/booking.service.js";
-import { success } from "../utils/response.js";
-
+import { successResponse, errorResponse } from "../utils/response.js";
 export const createBooking = async (req, res, next) => {
   try {
     const data = await service.createBooking(req.user.id, req.body);
