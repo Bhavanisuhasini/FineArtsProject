@@ -1,31 +1,19 @@
 import express from "express";
 import { requireAuth } from "../middlewares/auth.middleware.js";
 import { allowRoles } from "../middlewares/role.middleware.js";
-import {
-  requireApprovedInstitute,
-  requireApprovedTrainer
-} from "../middlewares/approval.middleware.js";
-import {
-  createClassByInstitute,
-  createClassByTrainer
-} from "../controllers/class.controller.js";
 
 const router = express.Router();
 
-router.post(
-  "/institute",
+router.post("/institute",
   requireAuth,
   allowRoles("INSTITUTE"),
-  requireApprovedInstitute,
-  createClassByInstitute
+  (req, res) => res.send("Institute class created")
 );
 
-router.post(
-  "/trainer",
+router.post("/trainer",
   requireAuth,
   allowRoles("TRAINER"),
-  requireApprovedTrainer,
-  createClassByTrainer
+  (req, res) => res.send("Trainer class created")
 );
 
 export default router;

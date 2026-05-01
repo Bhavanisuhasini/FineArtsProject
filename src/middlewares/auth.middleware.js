@@ -6,39 +6,25 @@ export const firebaseAuth = async (req, res, next) => {
     const token = req.headers.authorization?.split(" ")[1];
 
     if (!token) {
-      return res.status(401).json({ message: "No token" });
+      return res.status(401).json({ message: "Missing token" });
     }
 
     const decoded = await admin.auth().verifyIdToken(token);
 
     req.firebaseUser = decoded;
+
+    const pool = getPool();
+
+    const result = await pool.request()
+      .input("firebase_uid", sql.NVarChar, decoded.uid)
+      .query(`SELECT * FROM accounts WHERE firebase_uid=@firebase_uid`);
+
+    req.account = result.recordset[0];
+
     next();
-  } catch (error) {
-    res.status(401).json({ message: "Invalid token" });
+  } catch (err) {
+    return res.status(401).json({ message: "Invalid token" });
   }
 };
 
-export const attachAccount = async (req, res, next) => {
-  const pool = getPool();
-
-  const result = await pool.request()
-    .input("uid", sql.NVarChar, req.firebaseUser.uid)
-    .query("SELECT * FROM accounts WHERE firebase_uid=@uid");
-
-  if (result.recordset.length === 0) {
-    return res.status(401).json({ message: "Account not found" });
-  }
-
-  req.account = result.recordset[0];
-
-  // get roles
-  const roles = await pool.request()
-    .input("account_id", sql.BigInt, req.account.id)
-    .query("SELECT role FROM account_roles WHERE account_id=@account_id");
-
-  req.roles = roles.recordset.map(r => r.role);
-
-  next();
-};
-
-export const requireAuth = [firebaseAuth, attachAccount];
+export const requireAuth = firebaseAuth;

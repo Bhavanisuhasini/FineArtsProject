@@ -1,32 +1,18 @@
 import express from "express";
 import * as controller from "../controllers/dashboard.controller.js";
-import { requireAuth } from "../middlewares/auth.middleware.js";
-import { allowRoles } from "../middlewares/role.middleware.js";
+import { firebaseAuth } from "../middlewares/auth.middleware.js";
 
 const router = express.Router();
 
-router.get("/user", requireAuth, allowRoles("USER"), controller.userDashboard);
+// Each role hits their own endpoint with their Firebase token
+router.get("/user",      firebaseAuth, controller.userDashboard);
+router.get("/trainer",   firebaseAuth, controller.trainerDashboard);
+router.get("/institute", firebaseAuth, controller.instituteDashboard);
+router.get("/admin",     firebaseAuth, controller.adminDashboard);
 
-router.get("/trainer", requireAuth, allowRoles("TRAINER"), controller.trainerDashboard);
-
-router.get("/institute", requireAuth, allowRoles("INSTITUTE"), controller.instituteDashboard);
-
-router.get("/admin", requireAuth, allowRoles("ADMIN"), controller.adminDashboard);
-
-router.get("/admin/revenue", requireAuth, allowRoles("ADMIN"), controller.adminRevenue);
-
-router.get(
-  "/admin/bookings-summary",
-  requireAuth,
-  allowRoles("ADMIN"),
-  controller.adminBookingsSummary
-);
-
-router.get(
-  "/admin/users-summary",
-  requireAuth,
-  allowRoles("ADMIN"),
-  controller.adminUsersSummary
-);
+// Admin reports
+router.get("/admin/revenue",          firebaseAuth, controller.adminRevenue);
+router.get("/admin/bookings-summary", firebaseAuth, controller.adminBookingsSummary);
+router.get("/admin/users-summary",    firebaseAuth, controller.adminUsersSummary);
 
 export default router;

@@ -1,28 +1,26 @@
 import express from "express";
-import { firebaseAuth, requireAuth } from "../middlewares/auth.middleware.js";
-import { allowRoles } from "../middlewares/role.middleware.js";
+import { firebaseAuth } from "../middlewares/auth.middleware.js";
 import {
-  instituteSignup,
-  instituteSignin,
-  getMyInstitute
+  instituteLogin,
+  instituteCompleteProfile,
+  getInstituteProfile,
+  listInstitutes,
+  getInstituteTrainers,
+  updateTrainerApproval,
 } from "../controllers/institute.controller.js";
 
 const router = express.Router();
 
-router.post("/signup", firebaseAuth, instituteSignup);
+// Auth
+router.post("/login",            firebaseAuth, instituteLogin);
+router.put("/complete-profile",  firebaseAuth, instituteCompleteProfile);
+router.get("/profile",           firebaseAuth, getInstituteProfile);
 
-router.post(
-  "/signin",
-  requireAuth,
-  allowRoles("INSTITUTE"),
-  instituteSignin
-);
+// Public listing
+router.get("/",                  listInstitutes);
+router.get("/:id/trainers",      getInstituteTrainers);
 
-router.get(
-  "/my/profile",
-  requireAuth,
-  allowRoles("INSTITUTE"),
-  getMyInstitute
-);
+// Institute manages its trainers
+router.put("/trainers/:trainerId/approval", firebaseAuth, updateTrainerApproval);
 
 export default router;

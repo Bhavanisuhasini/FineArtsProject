@@ -1,69 +1,67 @@
 import {
-  instituteSignupService,
-  instituteSigninService,
-  getMyInstituteService
+  instituteLoginService,
+  instituteCompleteProfileService,
+  getInstituteProfileService,
+  listInstitutesService,
+  getInstituteTrainersService,
+  updateTrainerApprovalService,
 } from "../services/institute.service.js";
 
-export const instituteSignup = async (req, res) => {
+export const instituteLogin = async (req, res) => {
   try {
-    const data = await instituteSignupService(req.firebaseUser, req.body);
-
-    return res.status(201).json({
-      success: true,
-      message: "Institute signup completed. Waiting for admin approval.",
-      data
-    });
-  } catch (error) {
-    return res.status(400).json({
-      success: false,
-      message: error.message
-    });
+    const data = await instituteLoginService(req.firebaseUser);
+    res.json({ success: true, message: "Institute login successful", data });
+  } catch (e) {
+    res.status(400).json({ message: e.message });
   }
 };
 
-export const instituteSignin = async (req, res) => {
+export const instituteCompleteProfile = async (req, res) => {
   try {
-    if (req.account.role !== "INSTITUTE") {
-      return res.status(403).json({
-        success: false,
-        message: "Only institute can signin here"
-      });
+    const data = await instituteCompleteProfileService(req.account.id, req.body);
+    res.json({ success: true, message: "Institute profile completed", data });
+  } catch (e) {
+    res.status(400).json({ message: e.message });
+  }
+};
+
+export const getInstituteProfile = async (req, res) => {
+  try {
+    const data = await getInstituteProfileService(req.account.id);
+    res.json({ success: true, data });
+  } catch (e) {
+    res.status(400).json({ message: e.message });
+  }
+};
+
+export const listInstitutes = async (req, res) => {
+  try {
+    const data = await listInstitutesService(req.query);
+    res.json({ success: true, data });
+  } catch (e) {
+    res.status(400).json({ message: e.message });
+  }
+};
+
+export const getInstituteTrainers = async (req, res) => {
+  try {
+    const data = await getInstituteTrainersService(req.params.id);
+    res.json({ success: true, data });
+  } catch (e) {
+    res.status(400).json({ message: e.message });
+  }
+};
+
+export const updateTrainerApproval = async (req, res) => {
+  try {
+    const { trainerId } = req.params;
+    const { status, reason } = req.body;
+    if (!["APPROVED", "REJECTED"].includes(status)) {
+      return res.status(400).json({ message: "status must be APPROVED or REJECTED" });
     }
-
-    const institute = await instituteSigninService(req.account.id);
-
-    return res.status(200).json({
-      success: true,
-      message:
-        institute.approval_status === "APPROVED"
-          ? "Institute signin successful"
-          : "Institute signin successful, waiting for admin approval",
-      data: {
-        account: req.account,
-        institute
-      }
-    });
-  } catch (error) {
-    return res.status(400).json({
-      success: false,
-      message: error.message
-    });
-  }
-};
-
-export const getMyInstitute = async (req, res) => {
-  try {
-    const institute = await getMyInstituteService(req.account.id);
-
-    return res.status(200).json({
-      success: true,
-      message: "Institute profile fetched successfully",
-      data: institute
-    });
-  } catch (error) {
-    return res.status(400).json({
-      success: false,
-      message: error.message
-    });
+    const data = await updateTrainerApprovalService(req.account.id, trainerId, status, reason);
+    res.json({ success: true, message: `Trainer ${status.toLowerCase()}`, data });
+  } catch (e) {
+    res.status(400).json({ message: e.message });
   }
 };
