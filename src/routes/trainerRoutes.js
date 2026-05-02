@@ -4,7 +4,7 @@ import { trainerLogin, trainerCompleteProfile } from "../controllers/trainer.con
 
 const router = express.Router();
 
-router.post("/login", firebaseAuth, trainerLogin);
-router.put("/complete-profile", firebaseAuth, trainerCompleteProfile);
+router.post("/login",            firebaseAuth, trainerLogin);
+router.put("/complete-profile",  firebaseAuth, trainerCompleteProfile);
 
 export default router;

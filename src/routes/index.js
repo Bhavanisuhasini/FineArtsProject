@@ -13,7 +13,7 @@ import dashboardRoutes from "./dashboard.routes.js";
 import authRoutes from "./authRoutes.js";
 import userRoutes from "./userRoutes.js";
 import adminAuthRoutes from "./adminAuth.routes.js";
-import subscriptionRoutes from "./subscription.routes.js";
+import subscriptionRoutes from "./Subscription.routes.js";
 
 const router = express.Router();
 

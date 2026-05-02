@@ -1,19 +1,39 @@
 import express from "express";
-import * as controller from "../controllers/payment.controller.js";
-import { requireAuth } from "../middlewares/auth.middleware.js";
+import { firebaseAuth } from "../middlewares/auth.middleware.js";
+import {
+  getQRDetails,
+  submitPayment,
+  getMyPayments,
+  getPendingPayments,
+  verifyPayment,
+  rejectPayment,
+  getQRSettings,
+} from "../controllers/payment.controller.js";
 
 const router = express.Router();
 
-router.post("/create-order", requireAuth, controller.createPaymentOrder);
-router.post("/verify", requireAuth, controller.verifyPayment);
-router.post("/", requireAuth, controller.savePayment);
+/* ── PUBLIC ──────────────────────────────────────────────────────────────── */
+// Get QR code + amount for a class before booking
+router.get("/qr/:classId", getQRDetails);
 
-router.get("/my", requireAuth, controller.getMyPayments);
-router.get("/booking/:bookingId", requireAuth, controller.getPaymentByBookingId);
+// Get QR settings (UPI ID, payee name)
+router.get("/qr-settings", getQRSettings);
 
-router.post("/:id/refund", requireAuth, controller.refundPayment);
+/* ── USER (authenticated) ────────────────────────────────────────────────── */
+// Submit payment after scanning QR and paying
+router.post("/submit", firebaseAuth, submitPayment);
 
-// webhook usually should NOT use Firebase auth
-router.post("/webhook", controller.paymentWebhook);
+// View my payment history
+router.get("/my", firebaseAuth, getMyPayments);
+
+/* ── ADMIN / INSTITUTE (authenticated) ───────────────────────────────────── */
+// View all pending payments waiting for verification
+router.get("/pending", firebaseAuth, getPendingPayments);
+
+// Verify a payment → booking gets CONFIRMED
+router.patch("/:id/verify", firebaseAuth, verifyPayment);
+
+// Reject a payment → booking gets CANCELLED
+router.patch("/:id/reject", firebaseAuth, rejectPayment);
 
 export default router;

@@ -1,62 +1,66 @@
-export const createPaymentOrder = async (req, res) => {
-  return res.status(200).json({
-    success: true,
-    message: "Payment order created successfully",
-    data: {
-      booking_id: req.body.booking_id,
-      amount: req.body.amount,
-      status: "CREATED"
-    }
-  });
+import {
+  getQRDetailsService,
+  submitPaymentService,
+  getPendingPaymentsService,
+  verifyPaymentService,
+  rejectPaymentService,
+  getMyPaymentsService,
+  getQRSettingsService,
+} from "../services/payment.service.js";
+
+/* ── PUBLIC: GET QR + AMOUNT FOR A CLASS ───────────────────────────────── */
+export const getQRDetails = async (req, res) => {
+  try {
+    const data = await getQRDetailsService(req.params.classId);
+    res.json({ success: true, data });
+  } catch (e) { res.status(404).json({ success: false, message: e.message }); }
 };
 
-export const verifyPayment = async (req, res) => {
-  return res.status(200).json({
-    success: true,
-    message: "Payment verified successfully",
-    data: req.body
-  });
+/* ── USER: SUBMIT PAYMENT AFTER SCANNING QR ────────────────────────────── */
+export const submitPayment = async (req, res) => {
+  try {
+    const data = await submitPaymentService(req.account.id, req.body);
+    res.status(201).json({ success: true, message: data.message, data });
+  } catch (e) { res.status(400).json({ success: false, message: e.message }); }
 };
 
-export const savePayment = async (req, res) => {
-  return res.status(201).json({
-    success: true,
-    message: "Payment saved successfully",
-    data: req.body
-  });
-};
-
+/* ── USER: GET MY PAYMENTS ──────────────────────────────────────────────── */
 export const getMyPayments = async (req, res) => {
-  return res.status(200).json({
-    success: true,
-    message: "My payments fetched successfully",
-    data: []
-  });
+  try {
+    const data = await getMyPaymentsService(req.account.id);
+    res.json({ success: true, data });
+  } catch (e) { res.status(400).json({ success: false, message: e.message }); }
 };
 
-export const getPaymentByBookingId = async (req, res) => {
-  return res.status(200).json({
-    success: true,
-    message: "Payment by booking fetched successfully",
-    data: {
-      booking_id: req.params.bookingId
-    }
-  });
+/* ── ADMIN/INSTITUTE: GET PENDING PAYMENTS TO VERIFY ───────────────────── */
+export const getPendingPayments = async (req, res) => {
+  try {
+    const data = await getPendingPaymentsService();
+    res.json({ success: true, data });
+  } catch (e) { res.status(400).json({ success: false, message: e.message }); }
 };
 
-export const refundPayment = async (req, res) => {
-  return res.status(200).json({
-    success: true,
-    message: "Refund processed successfully",
-    data: {
-      payment_id: req.params.id
-    }
-  });
+/* ── ADMIN/INSTITUTE: VERIFY PAYMENT → CONFIRM BOOKING ─────────────────── */
+export const verifyPayment = async (req, res) => {
+  try {
+    const data = await verifyPaymentService(req.account.id, req.params.id);
+    res.json({ success: true, message: data.message, data });
+  } catch (e) { res.status(400).json({ success: false, message: e.message }); }
 };
 
-export const paymentWebhook = async (req, res) => {
-  return res.status(200).json({
-    success: true,
-    message: "Webhook received successfully"
-  });
+/* ── ADMIN/INSTITUTE: REJECT PAYMENT ────────────────────────────────────── */
+export const rejectPayment = async (req, res) => {
+  try {
+    const { reason } = req.body;
+    const data = await rejectPaymentService(req.account.id, req.params.id, reason);
+    res.json({ success: true, message: data.message, data });
+  } catch (e) { res.status(400).json({ success: false, message: e.message }); }
+};
+
+/* ── GET QR SETTINGS ────────────────────────────────────────────────────── */
+export const getQRSettings = async (req, res) => {
+  try {
+    const data = await getQRSettingsService();
+    res.json({ success: true, data });
+  } catch (e) { res.status(400).json({ success: false, message: e.message }); }
 };

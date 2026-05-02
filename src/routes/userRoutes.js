@@ -4,26 +4,26 @@ import { accountAuth } from "../middlewares/accountAuth.js";
 import { roleAuth } from "../middlewares/roleAuth.js";
 
 import {
-  createOrUpdateProfile,
-  getMyProfile
+ createOrUpdateProfile,
+ getMyProfile
 } from "../controllers/userController.js";
 
 const router = express.Router();
 
 router.post(
-  "/profile",
-  firebaseAuth,
-  accountAuth,
-  roleAuth("USER"),
-  createOrUpdateProfile
+ "/profile",
+ firebaseAuth,
+ accountAuth,
+ roleAuth("USER"),
+ createOrUpdateProfile
 );
 
 router.get(
-  "/profile",
-  firebaseAuth,
-  accountAuth,
-  roleAuth("USER"),
-  getMyProfile
+ "/profile",
+ firebaseAuth,
+ accountAuth,
+ roleAuth("USER"),
+ getMyProfile
 );
 
 export default router;
