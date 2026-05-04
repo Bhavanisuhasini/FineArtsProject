@@ -1,5 +1,11 @@
 import { getPool, sql } from "../config/db.js";
 
+/*
+  SQL — run once in SSMS if columns don't exist:
+  ALTER TABLE trainers ADD qr_image_url NVARCHAR(500) NULL;
+  ALTER TABLE trainers ADD upi_id NVARCHAR(100) NULL;
+*/
+
 // ─── LOGIN (auto-create account + trainer row on first visit) ───────────────
 export const trainerLogin = async (req, res) => {
   try {
@@ -9,17 +15,24 @@ export const trainerLogin = async (req, res) => {
     let account = req.account;
 
     if (!account) {
-      const insertResult = await pool.request()
+      const upsertResult = await pool.request()
         .input("firebase_uid", sql.NVarChar(255), uid)
         .input("phone_number", sql.NVarChar(20), phone_number || null)
         .input("email", sql.NVarChar(255), email || null)
         .input("role", sql.NVarChar(20), "TRAINER")
         .query(`
-          INSERT INTO accounts (firebase_uid, phone_number, email, role, is_active, is_verified)
-          OUTPUT INSERTED.*
-          VALUES (@firebase_uid, @phone_number, @email, @role, 1, 1)
+          MERGE accounts AS target
+          USING (SELECT @firebase_uid AS firebase_uid) AS source
+            ON target.firebase_uid = source.firebase_uid
+          WHEN MATCHED THEN
+            UPDATE SET role = @role
+          WHEN NOT MATCHED THEN
+            INSERT (firebase_uid, phone_number, email, role, is_active, is_verified)
+            VALUES (@firebase_uid, @phone_number, @email, @role, 1, 1);
+
+          SELECT * FROM accounts WHERE firebase_uid = @firebase_uid;
         `);
-      account = insertResult.recordset[0];
+      account = upsertResult.recordset[0];
     }
 
     // Ensure account_roles row exists
@@ -163,5 +176,144 @@ export const trainerCompleteProfile = async (req, res) => {
   } catch (e) {
     console.error("Complete profile error:", e.message);
     res.status(400).json({ message: e.message });
+  }
+};
+
+// ─── GET PUBLIC TRAINER PROFILE (for users to view trainer details) ──────────
+export const getTrainerPublicProfile = async (req, res) => {
+  try {
+    const pool = getPool();
+    const { id } = req.params;
+
+    const result = await pool.request()
+      .input("id", sql.BigInt, parseInt(id))
+      .query(`
+        SELECT
+          t.id, t.full_name, t.bio, t.experience_years,
+          t.profile_image, t.approval_status, t.is_profile_completed,
+          t.email, t.phone_number, t.qr_image_url,
+          i.name AS institute_name, i.logo AS institute_logo, i.city AS institute_city,
+          (SELECT COUNT(*) FROM classes WHERE trainer_id = t.id AND is_active = 1 AND status = 'ACTIVE') AS active_class_count,
+          (SELECT COUNT(*) FROM bookings WHERE trainer_id = t.id AND status = 'CONFIRMED') AS total_students
+        FROM trainers t
+        LEFT JOIN institutes i ON t.institute_id = i.id
+        WHERE t.id = @id AND t.is_active = 1 AND t.approval_status = 'APPROVED'
+      `);
+
+    if (result.recordset.length === 0) {
+      return res.status(404).json({ success: false, message: "Trainer not found" });
+    }
+
+    const trainer = result.recordset[0];
+
+    // Get specializations
+    const specs = await pool.request()
+      .input("trainer_id", sql.BigInt, parseInt(id))
+      .query(`
+        SELECT ts.*, c.name AS category_name, s.name AS subcategory_name
+        FROM trainer_specializations ts
+        JOIN categories c ON ts.category_id = c.id
+        LEFT JOIN subcategories s ON ts.subcategory_id = s.id
+        WHERE ts.trainer_id = @trainer_id
+      `);
+
+    // Get active classes
+    const classes = await pool.request()
+      .input("trainer_id", sql.BigInt, parseInt(id))
+      .query(`
+        SELECT c.id, c.title, c.price, c.duration, c.level, c.mode,
+          c.max_students, c.created_at,
+          cat.name AS category_name
+        FROM classes c
+        LEFT JOIN categories cat ON c.category_id = cat.id
+        WHERE c.trainer_id = @trainer_id AND c.is_active = 1 AND c.status = 'ACTIVE'
+        ORDER BY c.created_at DESC
+      `);
+
+    res.json({
+      success: true,
+      data: {
+        ...trainer,
+        specializations: specs.recordset,
+        classes: classes.recordset,
+      },
+    });
+  } catch (e) {
+    console.error("Get trainer profile error:", e.message);
+    res.status(500).json({ success: false, message: e.message });
+  }
+};
+
+// ─── GET MY TRAINER PROFILE (authenticated trainer) ──────────────────────────
+export const getMyTrainerProfile = async (req, res) => {
+  try {
+    const pool = getPool();
+    const accountId = req.account.id;
+
+    const result = await pool.request()
+      .input("account_id", sql.BigInt, accountId)
+      .query(`
+        SELECT t.*,
+          i.name AS institute_name, i.logo AS institute_logo,
+          (SELECT COUNT(*) FROM classes WHERE trainer_id = t.id AND is_active = 1) AS class_count,
+          (SELECT COUNT(*) FROM bookings WHERE trainer_id = t.id AND status = 'CONFIRMED') AS student_count
+        FROM trainers t
+        LEFT JOIN institutes i ON t.institute_id = i.id
+        WHERE t.account_id = @account_id
+      `);
+
+    if (result.recordset.length === 0) {
+      return res.status(404).json({ success: false, message: "Trainer profile not found" });
+    }
+
+    const trainer = result.recordset[0];
+
+    const specs = await pool.request()
+      .input("trainer_id", sql.BigInt, trainer.id)
+      .query(`
+        SELECT ts.*, c.name AS category_name, s.name AS subcategory_name
+        FROM trainer_specializations ts
+        JOIN categories c ON ts.category_id = c.id
+        LEFT JOIN subcategories s ON ts.subcategory_id = s.id
+        WHERE ts.trainer_id = @trainer_id
+      `);
+
+    res.json({ success: true, data: { ...trainer, specializations: specs.recordset } });
+  } catch (e) {
+    res.status(500).json({ success: false, message: e.message });
+  }
+};
+
+// ─── UPDATE TRAINER QR CODE (trainer uploads their own QR for class payments) ─
+export const updateTrainerQR = async (req, res) => {
+  try {
+    const pool = getPool();
+    const accountId = req.account.id;
+    const { qr_image_url, upi_id } = req.body;
+
+    if (!qr_image_url && !upi_id) {
+      return res.status(400).json({ message: "qr_image_url or upi_id is required" });
+    }
+
+    const result = await pool.request()
+      .input("account_id",  sql.BigInt,       accountId)
+      .input("qr_image_url",sql.NVarChar(500), qr_image_url || null)
+      .input("upi_id",      sql.NVarChar(100), upi_id || null)
+      .query(`
+        UPDATE trainers SET
+          qr_image_url = @qr_image_url,
+          upi_id       = @upi_id,
+          updated_at   = SYSDATETIME()
+        OUTPUT INSERTED.id, INSERTED.full_name, INSERTED.qr_image_url, INSERTED.upi_id
+        WHERE account_id = @account_id
+      `);
+
+    if (result.recordset.length === 0) {
+      return res.status(404).json({ message: "Trainer not found" });
+    }
+
+    res.json({ success: true, message: "QR code updated", data: result.recordset[0] });
+  } catch (e) {
+    res.status(500).json({ success: false, message: e.message });
   }
 };

@@ -1,0 +1,1025 @@
+{
+  "info": {
+    "name": "FineArts Academy API",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "description": "Complete API collection for FineArts Academy backend"
+  },
+  "variable": [
+    { "key": "base_url", "value": "http://localhost:5000/api" },
+    { "key": "firebase_token", "value": "PASTE_FIREBASE_ID_TOKEN_HERE" },
+    { "key": "admin_token", "value": "PASTE_ADMIN_JWT_TOKEN_HERE" },
+    { "key": "trainer_token", "value": "PASTE_TRAINER_FIREBASE_TOKEN_HERE" },
+    { "key": "institute_token", "value": "PASTE_INSTITUTE_FIREBASE_TOKEN_HERE" }
+  ],
+  "item": [
+
+    {
+      "name": "1. Admin Auth",
+      "item": [
+        {
+          "name": "Admin Login",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{base_url}}/admin-auth/login",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"admin@finearts.com\",\n  \"password\": \"Admin@123\"\n}"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "2. Auth (Firebase Users)",
+      "item": [
+        {
+          "name": "Login / Register (User)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{firebase_token}}" }
+            ],
+            "url": "{{base_url}}/auth/login",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"role\": \"USER\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Get Me",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{firebase_token}}" }],
+            "url": "{{base_url}}/auth/me"
+          }
+        }
+      ]
+    },
+    {
+      "name": "3. User Profile",
+      "item": [
+        {
+          "name": "Create / Update Profile",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{firebase_token}}" }
+            ],
+            "url": "{{base_url}}/users/profile",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"full_name\": \"Arjun Kumar\",\n  \"gender\": \"MALE\",\n  \"date_of_birth\": \"2000-05-15\",\n  \"city\": \"Chennai\",\n  \"state\": \"Tamil Nadu\",\n  \"country\": \"India\",\n  \"pincode\": \"600001\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Get My Profile",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{firebase_token}}" }],
+            "url": "{{base_url}}/users/profile"
+          }
+        }
+      ]
+    },
+
+    {
+      "name": "4. Trainer",
+      "item": [
+        {
+          "name": "Trainer Login (first time auto-creates account)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Authorization", "value": "Bearer {{trainer_token}}" }],
+            "url": "{{base_url}}/trainers/login"
+          }
+        },
+        {
+          "name": "Trainer Complete Profile",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{trainer_token}}" }
+            ],
+            "url": "{{base_url}}/trainers/complete-profile",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"full_name\": \"Priya Sharma\",\n  \"bio\": \"Classical Bharatanatyam dancer with 10 years experience\",\n  \"experience_years\": 10,\n  \"email\": \"priya@example.com\",\n  \"phone_number\": \"+919876543210\",\n  \"profile_image\": \"https://example.com/priya.jpg\",\n  \"certificate_url\": \"https://example.com/cert.pdf\",\n  \"specializations\": [\n    { \"category_id\": 1, \"subcategory_id\": 2 },\n    { \"category_id\": 3 }\n  ]\n}"
+            }
+          }
+        },
+        {
+          "name": "Get My Trainer Profile",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{trainer_token}}" }],
+            "url": "{{base_url}}/trainers/me/profile"
+          }
+        },
+        {
+          "name": "Get Trainer Public Profile (by ID)",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/trainers/1"
+          }
+        },
+        {
+          "name": "Update Trainer QR Code",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{trainer_token}}" }
+            ],
+            "url": "{{base_url}}/trainers/me/qr",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"qr_image_url\": \"https://example.com/trainer-qr.png\",\n  \"upi_id\": \"priya@upi\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Trainer Apply to Institute",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{trainer_token}}" }
+            ],
+            "url": "{{base_url}}/classes/trainer/apply-institute",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"institute_id\": 1\n}"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "5. Institute",
+      "item": [
+        {
+          "name": "Institute Login (first time auto-creates account)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Authorization", "value": "Bearer {{institute_token}}" }],
+            "url": "{{base_url}}/institutes/login"
+          }
+        },
+        {
+          "name": "Institute Complete Profile",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{institute_token}}" }
+            ],
+            "url": "{{base_url}}/institutes/complete-profile",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Kalai Nilayam Fine Arts\",\n  \"description\": \"Premier fine arts institute in Chennai\",\n  \"email\": \"info@kalainilayam.com\",\n  \"phone_number\": \"+914412345678\",\n  \"address\": \"12 Anna Salai\",\n  \"city\": \"Chennai\",\n  \"state\": \"Tamil Nadu\",\n  \"pincode\": \"600002\",\n  \"categories\": [\n    { \"category_id\": 1 },\n    { \"category_id\": 2, \"subcategory_id\": 3 }\n  ]\n}"
+            }
+          }
+        },
+        {
+          "name": "Get Institute Profile",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{institute_token}}" }],
+            "url": "{{base_url}}/institutes/profile"
+          }
+        },
+        {
+          "name": "List All Institutes (Public)",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/institutes?city=Chennai&page=1&limit=10",
+              "host": ["{{base_url}}"],
+              "path": ["institutes"],
+              "query": [
+                { "key": "city", "value": "Chennai" },
+                { "key": "page", "value": "1" },
+                { "key": "limit", "value": "10" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Institute Trainers (Public)",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/institutes/1/trainers"
+          }
+        },
+        {
+          "name": "Institute Add Trainer Directly",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{institute_token}}" }
+            ],
+            "url": "{{base_url}}/classes/institute/add-trainer",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"full_name\": \"Ravi Shankar\",\n  \"phone_number\": \"+919123456789\",\n  \"email\": \"ravi@example.com\",\n  \"bio\": \"Carnatic music teacher\",\n  \"experience_years\": 8,\n  \"category_id\": 1\n}"
+            }
+          }
+        },
+        {
+          "name": "Institute View Trainer Applications",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{institute_token}}" }],
+            "url": "{{base_url}}/classes/institute/trainer-applications"
+          }
+        },
+        {
+          "name": "Institute Accept/Reject Trainer Application",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{institute_token}}" }
+            ],
+            "url": "{{base_url}}/classes/institute/trainer-applications/1",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"action\": \"accept\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Institute Update Trainer Approval Status",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{institute_token}}" }
+            ],
+            "url": "{{base_url}}/institutes/trainers/1/approval",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"APPROVED\",\n  \"reason\": \"\"\n}"
+            }
+          }
+        }
+      ]
+    },
+
+    {
+      "name": "6. Categories & Subcategories",
+      "item": [
+        {
+          "name": "List All Categories",
+          "request": { "method": "GET", "url": "{{base_url}}/categories" }
+        },
+        {
+          "name": "Get Category by ID",
+          "request": { "method": "GET", "url": "{{base_url}}/categories/1" }
+        },
+        {
+          "name": "Create Category (Admin)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{admin_token}}" }
+            ],
+            "url": "{{base_url}}/categories",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Bharatanatyam\",\n  \"description\": \"Classical Indian dance form\",\n  \"image_url\": \"https://example.com/bharatanatyam.jpg\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Update Category (Admin)",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{admin_token}}" }
+            ],
+            "url": "{{base_url}}/categories/1",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Bharatanatyam\",\n  \"description\": \"Updated description\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Delete Category (Admin)",
+          "request": {
+            "method": "DELETE",
+            "header": [{ "key": "Authorization", "value": "Bearer {{admin_token}}" }],
+            "url": "{{base_url}}/categories/1"
+          }
+        },
+        {
+          "name": "List All Subcategories",
+          "request": { "method": "GET", "url": "{{base_url}}/subcategories" }
+        },
+        {
+          "name": "Get Subcategories by Category",
+          "request": { "method": "GET", "url": "{{base_url}}/subcategories/category/1" }
+        },
+        {
+          "name": "Create Subcategory (Admin)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{admin_token}}" }
+            ],
+            "url": "{{base_url}}/subcategories",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Beginner Bharatanatyam\",\n  \"category_id\": 1\n}"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "7. Classes",
+      "item": [
+        {
+          "name": "List Classes (Public)",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/classes?category_id=1&mode=ONLINE&level=BEGINNER&page=1&limit=12",
+              "host": ["{{base_url}}"],
+              "path": ["classes"],
+              "query": [
+                { "key": "category_id", "value": "1" },
+                { "key": "mode", "value": "ONLINE" },
+                { "key": "level", "value": "BEGINNER" },
+                { "key": "page", "value": "1" },
+                { "key": "limit", "value": "12" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Class by ID (Public)",
+          "request": { "method": "GET", "url": "{{base_url}}/classes/1" }
+        },
+        {
+          "name": "Institute Create Class",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{institute_token}}" }
+            ],
+            "url": "{{base_url}}/classes/institute/create",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Bharatanatyam for Beginners\",\n  \"description\": \"Learn the basics of Bharatanatyam\",\n  \"trainer_id\": 1,\n  \"category_id\": 1,\n  \"subcategory_id\": 2,\n  \"price\": 1500,\n  \"duration\": 60,\n  \"level\": \"BEGINNER\",\n  \"mode\": \"OFFLINE\",\n  \"max_students\": 20,\n  \"schedule\": {\n    \"start_date\": \"2026-06-01\",\n    \"end_date\": \"2026-08-31\",\n    \"start_time\": \"09:00\",\n    \"end_time\": \"10:00\",\n    \"days_of_week\": \"MON,WED,FRI\"\n  }\n}"
+            }
+          }
+        },
+        {
+          "name": "Trainer Create Class",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{trainer_token}}" }
+            ],
+            "url": "{{base_url}}/classes/trainer/create",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Online Carnatic Music\",\n  \"description\": \"Learn Carnatic music from scratch\",\n  \"category_id\": 2,\n  \"price\": 800,\n  \"duration\": 45,\n  \"level\": \"BEGINNER\",\n  \"mode\": \"ONLINE\",\n  \"max_students\": 10,\n  \"meeting_link\": \"https://meet.google.com/abc-xyz\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Update Class (Institute)",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{institute_token}}" }
+            ],
+            "url": "{{base_url}}/classes/institute/1",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Advanced Bharatanatyam\",\n  \"price\": 2000,\n  \"duration\": 90,\n  \"level\": \"ADVANCED\",\n  \"mode\": \"OFFLINE\",\n  \"max_students\": 15\n}"
+            }
+          }
+        },
+        {
+          "name": "Delete Class (Trainer)",
+          "request": {
+            "method": "DELETE",
+            "header": [{ "key": "Authorization", "value": "Bearer {{trainer_token}}" }],
+            "url": "{{base_url}}/classes/trainer/1"
+          }
+        }
+      ]
+    },
+
+    {
+      "name": "8. Payments (QR Flow)",
+      "item": [
+        {
+          "name": "Get QR Code + Amount for Class (Public)",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/payments/qr/1"
+          }
+        },
+        {
+          "name": "Get Platform QR Settings (Public)",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/payments/qr-settings"
+          }
+        },
+        {
+          "name": "Submit Payment (User - after scanning QR)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{firebase_token}}" }
+            ],
+            "url": "{{base_url}}/payments/submit",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"class_id\": 1,\n  \"booking_type\": \"CLASS\",\n  \"amount\": 1500,\n  \"utr_number\": \"UTR123456789\",\n  \"payment_screenshot\": \"https://example.com/screenshot.jpg\",\n  \"start_date\": \"2026-06-01\",\n  \"end_date\": \"2026-08-31\",\n  \"coupon_id\": null,\n  \"discount_amount\": 0,\n  \"points_redeemed\": 0,\n  \"points_discount\": 0\n}"
+            }
+          }
+        },
+        {
+          "name": "Submit Payment WITH Coupon",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{firebase_token}}" }
+            ],
+            "url": "{{base_url}}/payments/submit",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"class_id\": 1,\n  \"booking_type\": \"CLASS\",\n  \"amount\": 1500,\n  \"utr_number\": \"UTR987654321\",\n  \"coupon_id\": 1,\n  \"discount_amount\": 150,\n  \"points_redeemed\": 50,\n  \"points_discount\": 5\n}"
+            }
+          }
+        },
+        {
+          "name": "Get My Payments",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{firebase_token}}" }],
+            "url": "{{base_url}}/payments/my"
+          }
+        },
+        {
+          "name": "Get Pending Payments (Admin/Institute)",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{institute_token}}" }],
+            "url": "{{base_url}}/payments/pending"
+          }
+        },
+        {
+          "name": "Verify Payment (Admin/Institute)",
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Authorization", "value": "Bearer {{admin_token}}" }],
+            "url": "{{base_url}}/payments/1/verify"
+          }
+        },
+        {
+          "name": "Reject Payment (Admin/Institute)",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{admin_token}}" }
+            ],
+            "url": "{{base_url}}/payments/1/reject",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"reason\": \"UTR number not found in bank records\"\n}"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "9. Bookings",
+      "item": [
+        {
+          "name": "Create Booking",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{firebase_token}}" }
+            ],
+            "url": "{{base_url}}/bookings",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"booking_type\": \"CLASS\",\n  \"class_id\": 1,\n  \"amount\": 1500,\n  \"start_date\": \"2026-06-01\",\n  \"end_date\": \"2026-08-31\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Get My Bookings",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{firebase_token}}" }],
+            "url": "{{base_url}}/bookings/my"
+          }
+        },
+        {
+          "name": "Get Booking by ID",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{firebase_token}}" }],
+            "url": "{{base_url}}/bookings/1"
+          }
+        },
+        {
+          "name": "Cancel Booking",
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Authorization", "value": "Bearer {{firebase_token}}" }],
+            "url": "{{base_url}}/bookings/1/cancel"
+          }
+        },
+        {
+          "name": "Confirm Booking",
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Authorization", "value": "Bearer {{firebase_token}}" }],
+            "url": "{{base_url}}/bookings/1/confirm"
+          }
+        },
+        {
+          "name": "Complete Booking",
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Authorization", "value": "Bearer {{firebase_token}}" }],
+            "url": "{{base_url}}/bookings/1/complete"
+          }
+        },
+        {
+          "name": "Get Bookings by Class",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/bookings/class/1"
+          }
+        },
+        {
+          "name": "Get Bookings by Trainer",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/bookings/trainer/1"
+          }
+        },
+        {
+          "name": "Get Bookings by Institute",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/bookings/institute/1"
+          }
+        },
+        {
+          "name": "Check Booking Eligibility",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{firebase_token}}" }
+            ],
+            "url": "{{base_url}}/bookings/check-eligibility",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"class_id\": 1\n}"
+            }
+          }
+        }
+      ]
+    },
+
+    {
+      "name": "10. Subscriptions",
+      "item": [
+        {
+          "name": "List Plans (Public)",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/subscriptions?plan_type=USER",
+              "host": ["{{base_url}}"],
+              "path": ["subscriptions"],
+              "query": [{ "key": "plan_type", "value": "USER" }]
+            }
+          }
+        },
+        {
+          "name": "Get Plan by ID (Public)",
+          "request": { "method": "GET", "url": "{{base_url}}/subscriptions/1" }
+        },
+        {
+          "name": "Create Plan (Admin)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{admin_token}}" }
+            ],
+            "url": "{{base_url}}/subscriptions",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Monthly Premium\",\n  \"description\": \"Access all classes for 30 days\",\n  \"price\": 999,\n  \"duration_days\": 30,\n  \"plan_type\": \"USER\",\n  \"features\": \"Unlimited class views, Priority booking, 10% discount on all classes\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Update Plan (Admin)",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{admin_token}}" }
+            ],
+            "url": "{{base_url}}/subscriptions/1",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Monthly Premium\",\n  \"price\": 1199,\n  \"duration_days\": 30,\n  \"is_active\": 1\n}"
+            }
+          }
+        },
+        {
+          "name": "Subscribe to Plan (User)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{firebase_token}}" }
+            ],
+            "url": "{{base_url}}/subscriptions/subscribe",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"plan_id\": 1,\n  \"payment_id\": \"UTR_SUB_123456\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Get My Active Subscription",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{firebase_token}}" }],
+            "url": "{{base_url}}/subscriptions/my/active"
+          }
+        },
+        {
+          "name": "Cancel Subscription",
+          "request": {
+            "method": "DELETE",
+            "header": [{ "key": "Authorization", "value": "Bearer {{firebase_token}}" }],
+            "url": "{{base_url}}/subscriptions/cancel/1"
+          }
+        }
+      ]
+    },
+    {
+      "name": "11. Coupons & Rewards",
+      "item": [
+        {
+          "name": "Create Coupon (Admin)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{admin_token}}" }
+            ],
+            "url": "{{base_url}}/coupons",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"code\": \"WELCOME20\",\n  \"description\": \"20% off on first booking\",\n  \"discount_type\": \"PERCENT\",\n  \"discount_value\": 20,\n  \"min_order_amount\": 500,\n  \"max_discount_amount\": 300,\n  \"usage_limit\": 100,\n  \"valid_until\": \"2026-12-31T23:59:59\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Create Flat Coupon (Admin)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{admin_token}}" }
+            ],
+            "url": "{{base_url}}/coupons",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"code\": \"FLAT200\",\n  \"description\": \"Flat ₹200 off\",\n  \"discount_type\": \"FLAT\",\n  \"discount_value\": 200,\n  \"min_order_amount\": 1000,\n  \"usage_limit\": 50\n}"
+            }
+          }
+        },
+        {
+          "name": "List All Coupons (Admin)",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{admin_token}}" }],
+            "url": "{{base_url}}/coupons"
+          }
+        },
+        {
+          "name": "Toggle Coupon Active (Admin)",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{admin_token}}" }
+            ],
+            "url": "{{base_url}}/coupons/1/toggle",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"is_active\": false\n}"
+            }
+          }
+        },
+        {
+          "name": "Validate Coupon (User - before payment)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{firebase_token}}" }
+            ],
+            "url": "{{base_url}}/coupons/validate",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"code\": \"WELCOME20\",\n  \"amount\": 1500\n}"
+            }
+          }
+        },
+        {
+          "name": "Get My Rewards & Points",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{firebase_token}}" }],
+            "url": "{{base_url}}/coupons/rewards/my"
+          }
+        },
+        {
+          "name": "Redeem Points for Discount",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{firebase_token}}" }
+            ],
+            "url": "{{base_url}}/coupons/rewards/redeem",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"points\": 50\n}"
+            }
+          }
+        }
+      ]
+    },
+
+    {
+      "name": "12. Admin Panel",
+      "item": [
+        {
+          "name": "Get All Institutes",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{admin_token}}" }],
+            "url": {
+              "raw": "{{base_url}}/admin/institutes?status=PENDING",
+              "host": ["{{base_url}}"],
+              "path": ["admin", "institutes"],
+              "query": [{ "key": "status", "value": "PENDING" }]
+            }
+          }
+        },
+        {
+          "name": "Get Pending Institutes",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{admin_token}}" }],
+            "url": "{{base_url}}/admin/institutes/pending"
+          }
+        },
+        {
+          "name": "Approve Institute",
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Authorization", "value": "Bearer {{admin_token}}" }],
+            "url": "{{base_url}}/admin/institutes/1/approve"
+          }
+        },
+        {
+          "name": "Reject Institute",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{admin_token}}" }
+            ],
+            "url": "{{base_url}}/admin/institutes/1/reject",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"reason\": \"Incomplete documentation provided\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Get All Trainers",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{admin_token}}" }],
+            "url": {
+              "raw": "{{base_url}}/admin/trainers?status=PENDING",
+              "host": ["{{base_url}}"],
+              "path": ["admin", "trainers"],
+              "query": [{ "key": "status", "value": "PENDING" }]
+            }
+          }
+        },
+        {
+          "name": "Get Pending Trainers",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{admin_token}}" }],
+            "url": "{{base_url}}/admin/trainers/pending"
+          }
+        },
+        {
+          "name": "Approve Trainer",
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Authorization", "value": "Bearer {{admin_token}}" }],
+            "url": "{{base_url}}/admin/trainers/1/approve"
+          }
+        },
+        {
+          "name": "Reject Trainer",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{admin_token}}" }
+            ],
+            "url": "{{base_url}}/admin/trainers/1/reject",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"reason\": \"Certificate not verified\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Get Pending Classes",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{admin_token}}" }],
+            "url": "{{base_url}}/admin/classes/pending"
+          }
+        },
+        {
+          "name": "Approve Class",
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Authorization", "value": "Bearer {{admin_token}}" }],
+            "url": "{{base_url}}/admin/classes/1/approve"
+          }
+        },
+        {
+          "name": "Reject Class",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{admin_token}}" }
+            ],
+            "url": "{{base_url}}/admin/classes/1/reject",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"reason\": \"Class content does not meet guidelines\"\n}"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "13. Dashboard",
+      "item": [
+        {
+          "name": "User Dashboard",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{firebase_token}}" }],
+            "url": "{{base_url}}/dashboard/user"
+          }
+        },
+        {
+          "name": "Trainer Dashboard",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{trainer_token}}" }],
+            "url": "{{base_url}}/dashboard/trainer"
+          }
+        },
+        {
+          "name": "Institute Dashboard",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{institute_token}}" }],
+            "url": "{{base_url}}/dashboard/institute"
+          }
+        },
+        {
+          "name": "Admin Dashboard",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{firebase_token}}" }],
+            "url": "{{base_url}}/dashboard/admin"
+          }
+        },
+        {
+          "name": "Admin Revenue Report",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{firebase_token}}" }],
+            "url": "{{base_url}}/dashboard/admin/revenue"
+          }
+        },
+        {
+          "name": "Admin Bookings Summary",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{firebase_token}}" }],
+            "url": "{{base_url}}/dashboard/admin/bookings-summary"
+          }
+        },
+        {
+          "name": "Admin Users Summary",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{firebase_token}}" }],
+            "url": "{{base_url}}/dashboard/admin/users-summary"
+          }
+        }
+      ]
+    },
+    {
+      "name": "14. Notifications",
+      "item": [
+        {
+          "name": "Get My Notifications",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{firebase_token}}" }],
+            "url": "{{base_url}}/notifications/my"
+          }
+        },
+        {
+          "name": "Mark Notification as Read",
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Authorization", "value": "Bearer {{firebase_token}}" }],
+            "url": "{{base_url}}/notifications/1/read"
+          }
+        },
+        {
+          "name": "Mark All Notifications as Read",
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Authorization", "value": "Bearer {{firebase_token}}" }],
+            "url": "{{base_url}}/notifications/read-all"
+          }
+        },
+        {
+          "name": "Send Notification",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{firebase_token}}" }
+            ],
+            "url": "{{base_url}}/notifications/send",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Class Reminder\",\n  \"message\": \"Your Bharatanatyam class starts in 1 hour\",\n  \"target_account_id\": 5\n}"
+            }
+          }
+        }
+      ]
+    }
+  ]
+}

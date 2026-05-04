@@ -1,5 +1,6 @@
 import express from "express";
-import { firebaseAuth } from "../middlewares/auth.middleware.js";
+import { firebaseAuth } from "../middlewares/firebaseAuth.js";
+import { accountAuth } from "../middlewares/accountAuth.js";
 import {
   getQRDetails,
   submitPayment,
@@ -20,20 +21,12 @@ router.get("/qr/:classId", getQRDetails);
 router.get("/qr-settings", getQRSettings);
 
 /* ── USER (authenticated) ────────────────────────────────────────────────── */
-// Submit payment after scanning QR and paying
-router.post("/submit", firebaseAuth, submitPayment);
-
-// View my payment history
-router.get("/my", firebaseAuth, getMyPayments);
+router.post("/submit", firebaseAuth, accountAuth, submitPayment);
+router.get("/my", firebaseAuth, accountAuth, getMyPayments);
 
 /* ── ADMIN / INSTITUTE (authenticated) ───────────────────────────────────── */
-// View all pending payments waiting for verification
-router.get("/pending", firebaseAuth, getPendingPayments);
-
-// Verify a payment → booking gets CONFIRMED
-router.patch("/:id/verify", firebaseAuth, verifyPayment);
-
-// Reject a payment → booking gets CANCELLED
-router.patch("/:id/reject", firebaseAuth, rejectPayment);
+router.get("/pending", firebaseAuth, accountAuth, getPendingPayments);
+router.patch("/:id/verify", firebaseAuth, accountAuth, verifyPayment);
+router.patch("/:id/reject", firebaseAuth, accountAuth, rejectPayment);
 
 export default router;

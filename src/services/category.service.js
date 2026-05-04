@@ -17,7 +17,6 @@ export const getAllCategoriesService = async () => {
     ORDER BY id DESC
   `);
 
-
   return result.recordset;
 };
 
@@ -41,15 +40,16 @@ export const getCategoryByIdService = async (id) => {
 
   return result.recordset[0];
 };
+
 export const createCategoryService = async ({ name, description, image_url }) => {
   const pool = getPool();
 
   const existing = await pool.request()
     .input("name", sql.NVarChar(100), name)
     .query(`
-      SELECT id, name
+      SELECT id
       FROM categories
-      WHERE name = @name
+      WHERE name = @name AND is_active = 1
     `);
 
   if (existing.recordset.length > 0) {
@@ -61,15 +61,32 @@ export const createCategoryService = async ({ name, description, image_url }) =>
     .input("description", sql.NVarChar(500), description || null)
     .input("image_url", sql.NVarChar(500), image_url || null)
     .query(`
-      INSERT INTO categories (name, description, image_url)
+      INSERT INTO categories (
+        name,
+        description,
+        image_url,
+        is_active,
+        created_at,
+        updated_at
+      )
       OUTPUT INSERTED.*
-      VALUES (@name, @description, @image_url)
+      VALUES (
+        @name,
+        @description,
+        @image_url,
+        1,
+        SYSDATETIME(),
+        SYSDATETIME()
+      )
     `);
 
   return result.recordset[0];
 };
 
-export const updateCategoryService = async (id, { name, description, image_url, is_active }) => {
+export const updateCategoryService = async (
+  id,
+  { name, description, image_url, is_active }
+) => {
   const pool = getPool();
 
   const checkCategory = await pool.request()
@@ -91,7 +108,7 @@ export const updateCategoryService = async (id, { name, description, image_url, 
       .query(`
         SELECT id
         FROM categories
-        WHERE name = @name AND id <> @id
+        WHERE name = @name AND id <> @id AND is_active = 1
       `);
 
     if (duplicate.recordset.length > 0) {
@@ -104,7 +121,8 @@ export const updateCategoryService = async (id, { name, description, image_url, 
   const updatedName = name ?? oldCategory.name;
   const updatedDescription = description ?? oldCategory.description;
   const updatedImageUrl = image_url ?? oldCategory.image_url;
-  const updatedIsActive = typeof is_active === "boolean" ? is_active : oldCategory.is_active;
+  const updatedIsActive =
+    typeof is_active === "boolean" ? is_active : oldCategory.is_active;
 
   const result = await pool.request()
     .input("id", sql.BigInt, id)
@@ -130,19 +148,7 @@ export const updateCategoryService = async (id, { name, description, image_url, 
 export const deleteCategoryService = async (id) => {
   const pool = getPool();
 
-  const checkCategory = await pool.request()
-    .input("id", sql.BigInt, id)
-    .query(`
-      SELECT *
-      FROM categories
-      WHERE id = @id
-    `);
-
-  if (checkCategory.recordset.length === 0) {
-    throw new Error("Category not found");
-  }
-
-  await pool.request()
+  const result = await pool.request()
     .input("id", sql.BigInt, id)
     .query(`
       UPDATE categories
@@ -151,6 +157,10 @@ export const deleteCategoryService = async (id) => {
         updated_at = SYSDATETIME()
       WHERE id = @id
     `);
+
+  if (result.rowsAffected[0] === 0) {
+    throw new Error("Category not found");
+  }
 
   return true;
 };

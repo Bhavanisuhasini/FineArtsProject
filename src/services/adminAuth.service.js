@@ -24,12 +24,7 @@ export const adminLoginService = async ({ username, password }) => {
   if (!admin) {
     throw new Error("Invalid username or password");
   }
-console.log("POSTMAN PASSWORD:", password);
-console.log("DB HASH:", admin.password_hash);
-
-const isMatch = await bcrypt.compare(password, admin.password_hash);
-
-console.log("MATCH RESULT:", isMatch);
+  const isMatch = await bcrypt.compare(password, admin.password_hash);
 
   if (!isMatch) {
     throw new Error("Invalid username or password");

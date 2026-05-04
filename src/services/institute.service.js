@@ -12,15 +12,22 @@ export const instituteLoginService = async (firebaseUser) => {
 
   let account;
   if (accountResult.recordset.length === 0) {
-    const inserted = await pool.request()
+    await pool.request()
       .input("firebase_uid", sql.NVarChar(255), uid)
       .input("phone_number", sql.NVarChar(20), phone_number || null)
       .input("email", sql.NVarChar(255), email || null)
       .query(`
-        INSERT INTO accounts (firebase_uid, phone_number, email, role, is_active, is_verified)
-        OUTPUT INSERTED.*
-        VALUES (@firebase_uid, @phone_number, @email, 'INSTITUTE', 1, 1)
+        MERGE accounts AS target
+        USING (SELECT @firebase_uid AS firebase_uid) AS source
+          ON target.firebase_uid = source.firebase_uid
+        WHEN NOT MATCHED THEN
+          INSERT (firebase_uid, phone_number, email, role, is_active, is_verified)
+          VALUES (@firebase_uid, @phone_number, @email, 'INSTITUTE', 1, 1);
       `);
+
+    const inserted = await pool.request()
+      .input("firebase_uid", sql.NVarChar(255), uid)
+      .query(`SELECT * FROM accounts WHERE firebase_uid = @firebase_uid`);
     account = inserted.recordset[0];
   } else {
     account = accountResult.recordset[0];

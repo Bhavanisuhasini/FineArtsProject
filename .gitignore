@@ -1,8 +1,7 @@
-git push -u origin main
-=======
-
 node_modules/
 .env
 dist/
 build/
-
+*.log
+npm-debug.log*
+.DS_Store

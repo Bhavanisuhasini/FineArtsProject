@@ -1,6 +1,7 @@
 import express from "express";
-import { firebaseAuth } from "../middlewares/auth.middleware.js";
-import { adminAuth } from "../middlewares/adminAuth.middleware.js"; // 👈 add this
+import { firebaseAuth } from "../middlewares/firebaseAuth.js";
+import { accountAuth } from "../middlewares/accountAuth.js";
+import { adminAuth } from "../middlewares/adminAuth.middleware.js";
 
 import {
  listPlans,
@@ -10,21 +11,23 @@ import {
  subscribe,
  getMySubscription,
  cancelSubscription,
-} from "../controllers/subscription.controller.js";
+ getMyDiscount,
+} from "../controllers/Subscription.controller.js";
 
 const router = express.Router();
 
-// ✅ Public — anyone can view plans
+// Public — anyone can view plans
 router.get("/", listPlans);
-router.get("/:id", getPlan);
+router.get("/plans/:id", getPlan);
 
-// ✅ Admin — create/update plans (FIXED)
-router.post("/", adminAuth, createPlan); // 👑 admin only
-router.put("/:id", adminAuth, updatePlan); // 👑 admin only
+// Admin — create/update plans
+router.post("/", adminAuth, createPlan);
+router.put("/:id", adminAuth, updatePlan);
 
-// ✅ Users — subscription actions
-router.post("/subscribe", firebaseAuth, subscribe);
-router.get("/my/active", firebaseAuth, getMySubscription);
-router.delete("/cancel/:id", firebaseAuth, cancelSubscription);
+// Users — subscription actions
+router.post("/subscribe",      firebaseAuth, accountAuth, subscribe);
+router.get("/my/active",       firebaseAuth, accountAuth, getMySubscription);
+router.get("/my/discount",     firebaseAuth, accountAuth, getMyDiscount);
+router.delete("/cancel/:id",   firebaseAuth, accountAuth, cancelSubscription);
 
 export default router;
