@@ -3,8 +3,11 @@ info:
   title: FineArts Academy API
   description: Complete API for FineArts Academy backend — covers admin auth, user/trainer/institute profiles, classes, payments, bookings, subscriptions, coupons, notifications, and dashboards.
   version: 1.0.0
-
+  
 servers:
+  - url: http://13.204.176.128:5000/api
+    description: AWS EC2 Realtime Server
+
   - url: http://localhost:5000/api
     description: Local development server
 
