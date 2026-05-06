@@ -3,16 +3,32 @@ import { getPool, sql } from "../config/db.js";
 
 export const adminAuth = async (req, res, next) => {
   try {
-    const token = req.headers.authorization?.split(" ")[1];
+    const authHeader = req.headers.authorization;
 
-    if (!token) {
+    if (!authHeader || !authHeader.startsWith("Bearer ")) {
       return res.status(401).json({
         success: false,
         message: "Admin token missing"
       });
     }
 
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    const token = authHeader.split(" ")[1];
+
+    let decoded;
+
+    try {
+      decoded = jwt.verify(token, process.env.JWT_SECRET);
+    } catch (err) {
+      console.error("JWT VERIFY ERROR:", err.message);
+
+      return res.status(401).json({
+        success: false,
+        message:
+          err.name === "TokenExpiredError"
+            ? "Admin token expired"
+            : "Invalid admin token"
+      });
+    }
 
     const pool = getPool();
 
@@ -36,10 +52,14 @@ export const adminAuth = async (req, res, next) => {
 
     req.admin = admin;
     next();
+
   } catch (error) {
-    return res.status(401).json({
+    console.error("ADMIN AUTH ERROR:", error);
+
+    return res.status(500).json({
       success: false,
-      message: "Invalid admin token"
+      message: "Admin authentication failed",
+      error: error.message
     });
   }
 };

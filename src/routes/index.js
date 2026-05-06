@@ -9,7 +9,7 @@ import paymentRoutes from "./payment.routes.js";
 import adminRoutes from "./admin.routes.js";
 import notificationRoutes from "./notification.routes.js";
 import dashboardRoutes from "./dashboard.routes.js";
-import authRoutes from "./authRoutes.js";
+import authRoutes from "./auth.routes.js";
 import userRoutes from "./userRoutes.js";
 import adminAuthRoutes from "./adminAuth.routes.js";
 import subscriptionRoutes from "./Subscription.routes.js";

@@ -6,7 +6,9 @@ export const login = async (req, res) => {
 
     const role = req.body.role?.toUpperCase() || "USER";
 
-    if (!["USER", "TRAINER", "INSTITUTE", "ADMIN"].includes(role)) {
+    const allowedRoles = ["USER", "TRAINER", "INSTITUTE", "ADMIN"];
+
+    if (!allowedRoles.includes(role)) {
       return res.status(400).json({
         success: false,
         message: "Invalid role. Use USER, TRAINER, INSTITUTE, or ADMIN"
@@ -18,7 +20,8 @@ export const login = async (req, res) => {
     const existing = await pool.request()
       .input("firebase_uid", sql.NVarChar, uid)
       .query(`
-        SELECT * FROM accounts
+        SELECT *
+        FROM accounts
         WHERE firebase_uid = @firebase_uid
       `);
 
@@ -32,25 +35,43 @@ export const login = async (req, res) => {
         });
       }
 
-      const result = await pool.request()
+      const insertResult = await pool.request()
         .input("firebase_uid", sql.NVarChar, uid)
-        .input("email", sql.NVarChar, email || null)
-        .input("phone_number", sql.NVarChar, phone_number || null)
+        .input("email", sql.NVarChar, email)
+        .input("phone_number", sql.NVarChar, phone_number)
         .input("role", sql.NVarChar, role)
         .query(`
           INSERT INTO accounts
-          (firebase_uid, email, phone_number, role, is_verified)
+          (
+            firebase_uid,
+            email,
+            phone_number,
+            role,
+            is_active,
+            is_verified,
+            created_at,
+            updated_at
+          )
           OUTPUT INSERTED.*
           VALUES
-          (@firebase_uid, @email, @phone_number, @role, 1)
+          (
+            @firebase_uid,
+            @email,
+            @phone_number,
+            @role,
+            1,
+            1,
+            SYSDATETIME(),
+            SYSDATETIME()
+          )
         `);
 
-      account = result.recordset[0];
+      account = insertResult.recordset[0];
     } else {
       account = existing.recordset[0];
 
       if (account.role !== role) {
-        const updated = await pool.request()
+        const updateResult = await pool.request()
           .input("id", sql.BigInt, account.id)
           .input("role", sql.NVarChar, role)
           .query(`
@@ -61,7 +82,7 @@ export const login = async (req, res) => {
             WHERE id = @id
           `);
 
-        account = updated.recordset[0];
+        account = updateResult.recordset[0];
       }
     }
 
@@ -72,7 +93,7 @@ export const login = async (req, res) => {
     });
 
   } catch (error) {
-    console.error("Login error:", error);
+    console.error("Login Error:", error);
 
     return res.status(500).json({
       success: false,
