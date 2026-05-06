@@ -1,11 +1,20 @@
 import jwt from "jsonwebtoken";
+import bcrypt from "bcryptjs";
 import { getPool, sql } from "../config/db.js";
 
-export const adminLoginService = async ({ email, password }) => {
+const ADMIN_SECRET = "finearts_admin_secret_2026";
+
+export const adminLoginService = async ({ username, email, password }) => {
   const pool = getPool();
 
+  const loginEmail = email || username;
+
+  if (!loginEmail || !password) {
+    throw new Error("Email/username and password are required");
+  }
+
   const result = await pool.request()
-    .input("email", sql.NVarChar, email)
+    .input("email", sql.NVarChar, loginEmail)
     .query(`
       SELECT *
       FROM accounts
@@ -20,20 +29,20 @@ export const adminLoginService = async ({ email, password }) => {
     throw new Error("Admin not found");
   }
 
-  // ⚠️ simple password check (replace with bcrypt later)
-  if (password !== "Admin@123") {
+  const isPasswordValid = await bcrypt.compare(password, admin.password_hash);
+
+  if (!isPasswordValid) {
     throw new Error("Invalid credentials");
   }
 
-  // ✅ IMPORTANT: correct payload + same secret
   const token = jwt.sign(
     {
-      account_id: admin.id,
+      account_id: String(admin.id),
       role: "ADMIN"
     },
-    process.env.JWT_SECRET,
+    ADMIN_SECRET,
     {
-      expiresIn: process.env.JWT_EXPIRES_IN || "7d"
+      expiresIn: "7d"
     }
   );
 

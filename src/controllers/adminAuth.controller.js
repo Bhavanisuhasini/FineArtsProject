@@ -9,6 +9,7 @@ export const adminLogin = async (req, res) => {
       message: "Admin login successful",
       data
     });
+
   } catch (error) {
     return res.status(401).json({
       success: false,

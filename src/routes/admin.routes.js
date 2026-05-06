@@ -1,39 +1,36 @@
 import express from "express";
-import { adminAuth } from "../middlewares/adminAuth.middleware.js";
+import { adminAuth } from "../middlewares/adminAuth.js";
+
 import {
-  getPendingInstitutes,
   getAllInstitutes,
+  getPendingInstitutes,
   approveInstitute,
   rejectInstitute,
-  getPendingTrainers,
   getAllTrainers,
+  getPendingTrainers,
   approveTrainer,
   rejectTrainer,
   getPendingClasses,
   approveClass,
-  rejectClass,
+  rejectClass
 } from "../controllers/admin.controller.js";
 
 const router = express.Router();
 
-// All admin routes protected by admin JWT auth
 router.use(adminAuth);
 
-/* ── INSTITUTES ──────────────────────────────────────────────────────────── */
-router.get("/institutes",                   getAllInstitutes);          // ?status=PENDING|APPROVED|REJECTED
-router.get("/institutes/pending",           getPendingInstitutes);
-router.patch("/institutes/:id/approve",     approveInstitute);
-router.patch("/institutes/:id/reject",      rejectInstitute);          // body: { reason }
+router.get("/institutes", getAllInstitutes);
+router.get("/institutes/pending", getPendingInstitutes);
+router.patch("/institutes/:id/approve", approveInstitute);
+router.patch("/institutes/:id/reject", rejectInstitute);
 
-/* ── TRAINERS ────────────────────────────────────────────────────────────── */
-router.get("/trainers",                     getAllTrainers);            // ?status=PENDING|APPROVED|REJECTED
-router.get("/trainers/pending",             getPendingTrainers);
-router.patch("/trainers/:id/approve",       approveTrainer);
-router.patch("/trainers/:id/reject",        rejectTrainer);            // body: { reason }
+router.get("/trainers", getAllTrainers);
+router.get("/trainers/pending", getPendingTrainers);
+router.patch("/trainers/:id/approve", approveTrainer);
+router.patch("/trainers/:id/reject", rejectTrainer);
 
-/* ── CLASSES (independent trainer classes need admin approval) ───────────── */
-router.get("/classes/pending",              getPendingClasses);
-router.patch("/classes/:id/approve",        approveClass);
-router.patch("/classes/:id/reject",         rejectClass);              // body: { reason }
+router.get("/classes/pending", getPendingClasses);
+router.patch("/classes/:id/approve", approveClass);
+router.patch("/classes/:id/reject", rejectClass);
 
 export default router;

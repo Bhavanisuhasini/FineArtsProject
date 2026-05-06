@@ -1,6 +1,8 @@
 import jwt from "jsonwebtoken";
 import { getPool, sql } from "../config/db.js";
 
+const ADMIN_SECRET = "finearts_admin_secret_2026";
+
 export const adminAuth = async (req, res, next) => {
   try {
     const authHeader = req.headers.authorization;
@@ -14,28 +16,15 @@ export const adminAuth = async (req, res, next) => {
 
     const token = authHeader.split(" ")[1];
 
-    let decoded;
-
-    try {
-      decoded = jwt.verify(token, process.env.JWT_SECRET);
-    } catch (err) {
-      console.error("JWT VERIFY ERROR:", err.message);
-
-      return res.status(401).json({
-        success: false,
-        message:
-          err.name === "TokenExpiredError"
-            ? "Admin token expired"
-            : "Invalid admin token"
-      });
-    }
+    const decoded = jwt.verify(token, ADMIN_SECRET);
 
     const pool = getPool();
 
     const result = await pool.request()
       .input("id", sql.BigInt, decoded.account_id)
       .query(`
-        SELECT * FROM accounts
+        SELECT *
+        FROM accounts
         WHERE id = @id
           AND role = 'ADMIN'
           AND is_active = 1
@@ -54,12 +43,9 @@ export const adminAuth = async (req, res, next) => {
     next();
 
   } catch (error) {
-    console.error("ADMIN AUTH ERROR:", error);
-
-    return res.status(500).json({
+    return res.status(401).json({
       success: false,
-      message: "Admin authentication failed",
-      error: error.message
+      message: error.message
     });
   }
 };
