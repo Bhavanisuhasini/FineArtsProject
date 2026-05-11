@@ -7,32 +7,31 @@ export const swaggerDocument = {
   },
 
   servers: [
-    {
-      url: "http://localhost:5000/api",
-      description: "Local Server"
-    },
-    {
-      url: "http://13.204.176.128:5000/api",
-      description: "Production Server (AWS EC2)"
-    }
+    { url: "http://localhost:5000/api", description: "Local Server" },
+    { url: "http://13.204.176.128:5000/api", description: "Production Server (AWS EC2)" }
   ],
 
   components: {
     securitySchemes: {
       FirebaseAuth: {
-        type: "http",
-        scheme: "bearer",
-        bearerFormat: "JWT",
+        type: "http", scheme: "bearer", bearerFormat: "JWT",
         description: "Paste Firebase ID Token here (for Users, Trainers, Institutes)"
       },
       AdminAuth: {
-        type: "http",
-        scheme: "bearer",
-        bearerFormat: "JWT",
+        type: "http", scheme: "bearer", bearerFormat: "JWT",
         description: "Paste Admin JWT token here (obtained from /admin-auth/login)"
       }
     },
-
+    responses: {
+      Unauthorized: {
+        description: "Unauthorized — missing or invalid token",
+        content: { "application/json": { example: { success: false, message: "Missing or invalid Authorization token" } } }
+      },
+      NotFound: {
+        description: "Resource not found",
+        content: { "application/json": { example: { success: false, message: "Resource not found" } } }
+      }
+    },
     schemas: {
       ErrorResponse: {
         type: "object",
@@ -76,7 +75,7 @@ export const swaggerDocument = {
             }
           }
         },
-
+       
       }
     },
 
@@ -96,44 +95,12 @@ export const swaggerDocument = {
               schema: {
                 type: "object",
                 required: ["role"],
-                properties: {
-                  role: { type: "string", enum: ["USER"], example: "USER" }
-                }
+                properties: { role: { type: "string", enum: ["USER"], example: "USER" } }
               }
             }
           }
         },
-        responses: {
-          200: {
-            description: "Login successful",
-            content: {
-              "application/json": {
-                example: {
-                  success: true,
-                  message: "Login successful",
-                  data: {
-                    id: 1,
-                    firebase_uid: "abc123xyz",
-                    email: "user@gmail.com",
-                    phone_number: null,
-                    role: "USER",
-                    is_active: true,
-                    is_verified: true,
-                    created_at: "2026-05-01T10:00:00Z"
-                  }
-                }
-              }
-            }
-          },
-          401: {
-            description: "Invalid Firebase token",
-            content: {
-              "application/json": {
-                example: { success: false, message: "Invalid or expired Firebase token" }
-              }
-            }
-          }
-        }
+       
       }
     },
 
@@ -143,34 +110,7 @@ export const swaggerDocument = {
         summary: "Get Current Logged-in User",
         description: "Returns the currently authenticated user's account details based on the Firebase token.",
         security: [{ FirebaseAuth: [] }],
-        responses: {
-          200: {
-            description: "User fetched successfully",
-            content: {
-              "application/json": {
-                example: {
-                  success: true,
-                  message: "Current user fetched successfully",
-                  data: {
-                    id: 1,
-                    firebase_uid: "abc123xyz",
-                    email: "user@gmail.com",
-                    role: "USER",
-                    is_active: true
-                  }
-                }
-              }
-            }
-          },
-          401: {
-            description: "Unauthorized",
-            content: {
-              "application/json": {
-                example: { success: false, message: "Account not found. Please login first." }
-              }
-            }
-          }
-        }
+       
       }
     },
 
@@ -182,7 +122,7 @@ export const swaggerDocument = {
         tags: ["3. User Profile"],
         summary: "Create / Update Profile",
         description: "Creates or updates the authenticated user's profile.",
-        security: [{ FirebaseAuth: [] }],  // ✅ FIX: was already present on POST
+        security: [{ FirebaseAuth: [] }],
         requestBody: {
           required: true,
           content: {
@@ -202,72 +142,14 @@ export const swaggerDocument = {
             }
           }
         },
-        responses: {
-          200: {
-            description: "Profile created or updated",
-            content: {
-              "application/json": {
-                example: {
-                  success: true,
-                  message: "Profile updated",
-                  profile: {
-                    id: 5,
-                    full_name: "Arjun Kumar",
-                    gender: "MALE",
-                    date_of_birth: "2000-05-15",
-                    city: "Chennai",
-                    state: "Tamil Nadu",
-                    country: "India",
-                    pincode: "600001"
-                  }
-                }
-              }
-            }
-          },
-          401: {
-            description: "Unauthorized",
-            content: {
-              "application/json": {
-                example: { success: false, message: "Missing Authorization token" }
-              }
-            }
-          }
-        }
+       
       },
       get: {
         tags: ["3. User Profile"],
         summary: "Get My Profile",
         description: "Retrieves the authenticated user's complete profile.",
-        security: [{ FirebaseAuth: [] }],  // ✅ FIX: was MISSING — this caused the 401 bug
-        responses: {
-          200: {
-            description: "Profile fetched",
-            content: {
-              "application/json": {
-                example: {
-                  success: true,
-                  profile: {
-                    id: 5,
-                    full_name: "Arjun Kumar",
-                    gender: "MALE",
-                    city: "Chennai",
-                    state: "Tamil Nadu",
-                    country: "India",
-                    pincode: "600001"
-                  }
-                }
-              }
-            }
-          },
-          401: {
-            description: "Unauthorized",
-            content: {
-              "application/json": {
-                example: { success: false, message: "Missing Authorization token" }
-              }
-            }
-          }
-        }
+        security: [{ FirebaseAuth: [] }],
+       
       }
     },
 
@@ -280,28 +162,7 @@ export const swaggerDocument = {
         summary: "Trainer Login (auto-creates account on first login)",
         description: "Logs in a trainer using Firebase token. Auto-creates account if not exists.",
         security: [{ FirebaseAuth: [] }],
-        responses: {
-          200: {
-            description: "Trainer logged in",
-            content: {
-              "application/json": {
-                example: {
-                  message: "Login success",
-                  account: { id: "3", firebase_uid: "trainerUID...", email: "trainer@gmail.com", is_active: true },
-                  role: { role: "TRAINER", approval_status: "PENDING" }
-                }
-              }
-            }
-          },
-          401: {
-            description: "Unauthorized",
-            content: {
-              "application/json": {
-                example: { success: false, message: "Missing Authorization token" }
-              }
-            }
-          }
-        }
+        
       }
     },
 
@@ -341,27 +202,6 @@ export const swaggerDocument = {
             }
           }
         },
-        responses: {
-          200: {
-            description: "Profile completed",
-            content: {
-              "application/json": {
-                example: {
-                  message: "Profile updated",
-                  trainer: { id: "3", full_name: "Priya Sharma", bio: "Classical Bharatanatyam dancer...", experience_years: 10, approval_status: "PENDING" }
-                }
-              }
-            }
-          },
-          401: {
-            description: "Unauthorized",
-            content: {
-              "application/json": {
-                example: { success: false, message: "Missing Authorization token" }
-              }
-            }
-          }
-        }
       }
     },
 
@@ -371,27 +211,7 @@ export const swaggerDocument = {
         summary: "Get My Trainer Profile",
         description: "Fetches the authenticated trainer's own complete profile.",
         security: [{ FirebaseAuth: [] }],
-        responses: {
-          200: {
-            description: "Trainer profile fetched",
-            content: {
-              "application/json": {
-                example: {
-                  message: "Profile fetched",
-                  trainer: { id: "3", full_name: "Priya Sharma", experience_years: 10, approval_status: "PENDING", specializations: [] }
-                }
-              }
-            }
-          },
-          401: {
-            description: "Unauthorized",
-            content: {
-              "application/json": {
-                example: { success: false, message: "Missing Authorization token" }
-              }
-            }
-          }
-        }
+       
       }
     },
 
@@ -400,29 +220,7 @@ export const swaggerDocument = {
         tags: ["4. Trainer"],
         summary: "Get Trainer Public Profile (by ID)",
         description: "Public endpoint — returns a trainer's profile by numeric ID. No authentication required.",
-        parameters: [
-          { name: "id", in: "path", required: true, schema: { type: "integer", example: 1 } }
-        ],
-        responses: {
-          200: {
-            description: "Public trainer profile",
-            content: {
-              "application/json": {
-                example: {
-                  trainer: { id: 1, full_name: "Priya Sharma", bio: "Classical dancer...", experience_years: 10, specializations: [] }
-                }
-              }
-            }
-          },
-          404: {
-            description: "Trainer not found",
-            content: {
-              "application/json": {
-                example: { success: false, message: "Trainer not found" }
-              }
-            }
-          }
-        }
+        parameters: [{ name: "id", in: "path", required: true, schema: { type: "integer", example: 1 } }],
       }
     },
 
@@ -446,24 +244,7 @@ export const swaggerDocument = {
             }
           }
         },
-        responses: {
-          200: {
-            description: "QR code updated",
-            content: {
-              "application/json": {
-                example: { message: "QR updated successfully" }
-              }
-            }
-          },
-          401: {
-            description: "Unauthorized",
-            content: {
-              "application/json": {
-                example: { success: false, message: "Missing Authorization token" }
-              }
-            }
-          }
-        }
+        
       }
     },
 
@@ -479,31 +260,12 @@ export const swaggerDocument = {
             "application/json": {
               schema: {
                 type: "object",
-                properties: {
-                  institute_id: { type: "integer", example: 1 }
-                }
+                properties: { institute_id: { type: "integer", example: 1 } }
               }
             }
           }
         },
-        responses: {
-          200: {
-            description: "Application submitted",
-            content: {
-              "application/json": {
-                example: { message: "Application submitted successfully" }
-              }
-            }
-          },
-          401: {
-            description: "Unauthorized",
-            content: {
-              "application/json": {
-                example: { success: false, message: "Missing Authorization token" }
-              }
-            }
-          }
-        }
+        
       }
     },
 
@@ -516,28 +278,8 @@ export const swaggerDocument = {
         summary: "Institute Login (auto-creates account on first login)",
         description: "Logs in an institute using Firebase token. Auto-creates account if not exists.",
         security: [{ FirebaseAuth: [] }],
-        responses: {
-          200: {
-            description: "Institute logged in",
-            content: {
-              "application/json": {
-                example: {
-                  message: "Login success",
-                  account: { id: "2", firebase_uid: "instituteUID...", email: "institute@gmail.com", is_active: true },
-                  role: { role: "INSTITUTE", approval_status: "PENDING" }
-                }
-              }
-            }
-          },
-          401: {
-            description: "Unauthorized",
-            content: {
-              "application/json": {
-                example: { success: false, message: "Missing Authorization token" }
-              }
-            }
-          }
-        }
+       
+       
       }
     },
 
@@ -578,27 +320,7 @@ export const swaggerDocument = {
             }
           }
         },
-        responses: {
-          200: {
-            description: "Profile completed",
-            content: {
-              "application/json": {
-                example: {
-                  message: "Profile updated",
-                  institute: { id: "2", name: "Kalai Nilayam Fine Arts", city: "Chennai", approval_status: "PENDING" }
-                }
-              }
-            }
-          },
-          401: {
-            description: "Unauthorized",
-            content: {
-              "application/json": {
-                example: { success: false, message: "Missing Authorization token" }
-              }
-            }
-          }
-        }
+       
       }
     },
 
@@ -608,27 +330,7 @@ export const swaggerDocument = {
         summary: "Get Institute Profile",
         description: "Retrieves the authenticated institute's own profile details.",
         security: [{ FirebaseAuth: [] }],
-        responses: {
-          200: {
-            description: "Institute profile fetched",
-            content: {
-              "application/json": {
-                example: {
-                  message: "Profile fetched",
-                  institute: { id: "2", name: "Kalai Nilayam Fine Arts", city: "Chennai", state: "Tamil Nadu" }
-                }
-              }
-            }
-          },
-          401: {
-            description: "Unauthorized",
-            content: {
-              "application/json": {
-                example: { success: false, message: "Missing Authorization token" }
-              }
-            }
-          }
-        }
+       
       }
     },
 
@@ -642,19 +344,10 @@ export const swaggerDocument = {
           { name: "page", in: "query", schema: { type: "integer", example: 1 } },
           { name: "limit", in: "query", schema: { type: "integer", example: 10 } }
         ],
-        responses: {
-          200: {
-            description: "List of institutes",
-            content: {
-              "application/json": {
-                example: {
-                  institutes: [{ id: "2", name: "Kalai Nilayam Fine Arts", city: "Chennai" }],
-                  total: 5, page: 1, limit: 10
-                }
-              }
-            }
-          }
-        }
+        
+            
+          
+        
       }
     },
 
@@ -663,19 +356,8 @@ export const swaggerDocument = {
         tags: ["5. Institute"],
         summary: "Get Institute Trainers (Public)",
         description: "Returns all trainers associated with a specific institute.",
-        parameters: [
-          { name: "id", in: "path", required: true, schema: { type: "integer", example: 1 } }
-        ],
-        responses: {
-          200: {
-            description: "Trainers fetched",
-            content: {
-              "application/json": {
-                example: { trainers: [{ id: 3, full_name: "Priya Sharma", experience_years: 10 }] }
-              }
-            }
-          }
-        }
+        parameters: [{ name: "id", in: "path", required: true, schema: { type: "integer", example: 1 } }],
+        
       }
     },
 
@@ -703,24 +385,7 @@ export const swaggerDocument = {
             }
           }
         },
-        responses: {
-          200: {
-            description: "Trainer added",
-            content: {
-              "application/json": {
-                example: { message: "Trainer added successfully" }
-              }
-            }
-          },
-          401: {
-            description: "Unauthorized",
-            content: {
-              "application/json": {
-                example: { success: false, message: "Missing Authorization token" }
-              }
-            }
-          }
-        }
+        
       }
     },
 
@@ -730,24 +395,7 @@ export const swaggerDocument = {
         summary: "Institute View Trainer Applications",
         description: "Returns all trainer applications received by the institute.",
         security: [{ FirebaseAuth: [] }],
-        responses: {
-          200: {
-            description: "Applications fetched",
-            content: {
-              "application/json": {
-                example: { applications: [{ id: 1, trainer_id: 3, status: "PENDING", created_at: "2026-05-01T10:00:00Z" }] }
-              }
-            }
-          },
-          401: {
-            description: "Unauthorized",
-            content: {
-              "application/json": {
-                example: { success: false, message: "Missing Authorization token" }
-              }
-            }
-          }
-        }
+       
       }
     },
 
@@ -757,40 +405,19 @@ export const swaggerDocument = {
         summary: "Accept / Reject Trainer Application",
         description: "Allows an institute to accept or reject a pending trainer application.",
         security: [{ FirebaseAuth: [] }],
-        parameters: [
-          { name: "id", in: "path", required: true, schema: { type: "integer", example: 1 } }
-        ],
+        parameters: [{ name: "id", in: "path", required: true, schema: { type: "integer", example: 1 } }],
         requestBody: {
           required: true,
           content: {
             "application/json": {
               schema: {
                 type: "object",
-                properties: {
-                  action: { type: "string", enum: ["accept", "reject"], example: "accept" }
-                }
+                properties: { action: { type: "string", enum: ["accept", "reject"], example: "accept" } }
               }
             }
           }
         },
-        responses: {
-          200: {
-            description: "Application updated",
-            content: {
-              "application/json": {
-                example: { message: "Application accepted successfully" }
-              }
-            }
-          },
-          401: {
-            description: "Unauthorized",
-            content: {
-              "application/json": {
-                example: { success: false, message: "Missing Authorization token" }
-              }
-            }
-          }
-        }
+        
       }
     },
 
@@ -800,9 +427,7 @@ export const swaggerDocument = {
         summary: "Institute Update Trainer Approval Status",
         description: "Updates the approval status of a trainer within the institute.",
         security: [{ FirebaseAuth: [] }],
-        parameters: [
-          { name: "id", in: "path", required: true, schema: { type: "integer", example: 1 } }
-        ],
+        parameters: [{ name: "id", in: "path", required: true, schema: { type: "integer", example: 1 } }],
         requestBody: {
           required: true,
           content: {
@@ -817,24 +442,7 @@ export const swaggerDocument = {
             }
           }
         },
-        responses: {
-          200: {
-            description: "Approval status updated",
-            content: {
-              "application/json": {
-                example: { message: "Trainer approval status updated" }
-              }
-            }
-          },
-          401: {
-            description: "Unauthorized",
-            content: {
-              "application/json": {
-                example: { success: false, message: "Missing Authorization token" }
-              }
-            }
-          }
-        }
+       
       }
     },
 
@@ -846,19 +454,8 @@ export const swaggerDocument = {
         tags: ["6. Categories & Subcategories"],
         summary: "List All Categories (Public)",
         description: "Returns all available art categories.",
-        responses: {
-          200: {
-            description: "Categories fetched",
-            content: {
-              "application/json": {
-                example: {
-                  success: true,
-                  categories: [{ id: 1, name: "Bharatanatyam", description: "Classical Indian dance form", image_url: "https://example.com/img.jpg" }]
-                }
-              }
-            }
-          }
-        }
+      
+        
       },
       post: {
         tags: ["6. Categories & Subcategories"],
@@ -880,24 +477,7 @@ export const swaggerDocument = {
             }
           }
         },
-        responses: {
-          201: {
-            description: "Category created",
-            content: {
-              "application/json": {
-                example: { message: "Category created", category: { id: 1, name: "Bharatanatyam" } }
-              }
-            }
-          },
-          401: {
-            description: "Unauthorized",
-            content: {
-              "application/json": {
-                example: { success: false, message: "Missing Authorization token" }
-              }
-            }
-          }
-        }
+       
       }
     },
 
@@ -906,24 +486,7 @@ export const swaggerDocument = {
         tags: ["6. Categories & Subcategories"],
         summary: "Get Category by ID",
         parameters: [{ name: "id", in: "path", required: true, schema: { type: "integer", example: 1 } }],
-        responses: {
-          200: {
-            description: "Category detail",
-            content: {
-              "application/json": {
-                example: { category: { id: 1, name: "Bharatanatyam", description: "Classical Indian dance form" } }
-              }
-            }
-          },
-          404: {
-            description: "Not found",
-            content: {
-              "application/json": {
-                example: { success: false, message: "Category not found" }
-              }
-            }
-          }
-        }
+       
       },
       put: {
         tags: ["6. Categories & Subcategories"],
@@ -944,20 +507,14 @@ export const swaggerDocument = {
             }
           }
         },
-        responses: {
-          200: { description: "Category updated", content: { "application/json": { example: { message: "Category updated" } } } },
-          401: { description: "Unauthorized", content: { "application/json": { example: { success: false, message: "Missing Authorization token" } } } }
-        }
+       
       },
       delete: {
         tags: ["6. Categories & Subcategories"],
         summary: "Delete Category (Admin)",
         security: [{ AdminAuth: [] }],
         parameters: [{ name: "id", in: "path", required: true, schema: { type: "integer", example: 1 } }],
-        responses: {
-          200: { description: "Category deleted", content: { "application/json": { example: { message: "Category deleted" } } } },
-          401: { description: "Unauthorized", content: { "application/json": { example: { success: false, message: "Missing Authorization token" } } } }
-        }
+        
       }
     },
 
@@ -965,16 +522,8 @@ export const swaggerDocument = {
       get: {
         tags: ["6. Categories & Subcategories"],
         summary: "List All Subcategories (Public)",
-        responses: {
-          200: {
-            description: "Subcategories fetched",
-            content: {
-              "application/json": {
-                example: { subcategories: [{ id: 2, category_id: 1, name: "Beginner Bharatanatyam" }] }
-              }
-            }
-          }
-        }
+       
+        
       },
       post: {
         tags: ["6. Categories & Subcategories"],
@@ -994,10 +543,7 @@ export const swaggerDocument = {
             }
           }
         },
-        responses: {
-          201: { description: "Subcategory created", content: { "application/json": { example: { message: "Subcategory created", subcategory: { id: 2, name: "Beginner Bharatanatyam" } } } } },
-          401: { description: "Unauthorized", content: { "application/json": { example: { success: false, message: "Missing Authorization token" } } } }
-        }
+       
       }
     },
 
@@ -1006,16 +552,7 @@ export const swaggerDocument = {
         tags: ["6. Categories & Subcategories"],
         summary: "Get Subcategories by Category",
         parameters: [{ name: "id", in: "path", required: true, schema: { type: "integer", example: 1 } }],
-        responses: {
-          200: {
-            description: "Subcategories for the category",
-            content: {
-              "application/json": {
-                example: { category: { id: 1, name: "Bharatanatyam" }, subcategories: [{ id: 2, name: "Beginner Bharatanatyam" }] }
-              }
-            }
-          }
-        }
+       
       }
     },
 
@@ -1034,16 +571,8 @@ export const swaggerDocument = {
           { name: "page", in: "query", schema: { type: "integer", example: 1 } },
           { name: "limit", in: "query", schema: { type: "integer", example: 12 } }
         ],
-        responses: {
-          200: {
-            description: "Classes fetched",
-            content: {
-              "application/json": {
-                example: { classes: [{ id: 1, title: "Bharatanatyam for Beginners", price: 1500, level: "BEGINNER", mode: "OFFLINE" }], total: 20 }
-              }
-            }
-          }
-        }
+  
+        
       }
     },
 
@@ -1052,24 +581,7 @@ export const swaggerDocument = {
         tags: ["7. Classes"],
         summary: "Get Class by ID (Public)",
         parameters: [{ name: "id", in: "path", required: true, schema: { type: "integer", example: 1 } }],
-        responses: {
-          200: {
-            description: "Class detail",
-            content: {
-              "application/json": {
-                example: { class: { id: 1, title: "Bharatanatyam for Beginners", price: 1500, level: "BEGINNER", mode: "OFFLINE", max_students: 20 } }
-              }
-            }
-          },
-          404: {
-            description: "Class not found",
-            content: {
-              "application/json": {
-                example: { success: false, message: "Class not found" }
-              }
-            }
-          }
-        }
+       
       }
     },
 
@@ -1111,24 +623,7 @@ export const swaggerDocument = {
             }
           }
         },
-        responses: {
-          201: {
-            description: "Class created and sent for approval",
-            content: {
-              "application/json": {
-                example: { message: "Class created and sent for approval", class: { id: 5, title: "Bharatanatyam for Beginners", status: "PENDING" } }
-              }
-            }
-          },
-          401: {
-            description: "Unauthorized",
-            content: {
-              "application/json": {
-                example: { success: false, message: "Missing Authorization token" }
-              }
-            }
-          }
-        }
+        
       }
     },
 
@@ -1159,24 +654,7 @@ export const swaggerDocument = {
             }
           }
         },
-        responses: {
-          201: {
-            description: "Class created",
-            content: {
-              "application/json": {
-                example: { message: "Class created", class: { id: 6, title: "Online Carnatic Music", status: "PENDING" } }
-              }
-            }
-          },
-          401: {
-            description: "Unauthorized",
-            content: {
-              "application/json": {
-                example: { success: false, message: "Missing Authorization token" }
-              }
-            }
-          }
-        }
+       
       }
     },
 
@@ -1202,10 +680,7 @@ export const swaggerDocument = {
             }
           }
         },
-        responses: {
-          200: { description: "Class updated", content: { "application/json": { example: { message: "Class updated" } } } },
-          401: { description: "Unauthorized", content: { "application/json": { example: { success: false, message: "Missing Authorization token" } } } }
-        }
+       
       }
     },
 
@@ -1215,10 +690,7 @@ export const swaggerDocument = {
         summary: "Delete Class (Trainer)",
         security: [{ FirebaseAuth: [] }],
         parameters: [{ name: "id", in: "path", required: true, schema: { type: "integer", example: 1 } }],
-        responses: {
-          200: { description: "Class deleted", content: { "application/json": { example: { message: "Class deleted" } } } },
-          401: { description: "Unauthorized", content: { "application/json": { example: { success: false, message: "Missing Authorization token" } } } }
-        }
+       
       }
     },
 
@@ -1231,16 +703,7 @@ export const swaggerDocument = {
         summary: "Get QR Code + Amount for Class (Public)",
         description: "Returns the QR code image, UPI ID, and payable amount for a specific class.",
         parameters: [{ name: "class_id", in: "path", required: true, schema: { type: "integer", example: 1 } }],
-        responses: {
-          200: {
-            description: "QR code and amount",
-            content: {
-              "application/json": {
-                example: { qr_image_url: "https://example.com/qr.png", upi_id: "priya@upi", amount: 1500 }
-              }
-            }
-          }
-        }
+       
       }
     },
 
@@ -1248,16 +711,7 @@ export const swaggerDocument = {
       get: {
         tags: ["8. Payments (QR Flow)"],
         summary: "Get Platform QR Settings (Public)",
-        responses: {
-          200: {
-            description: "Platform QR settings",
-            content: {
-              "application/json": {
-                example: { qr_image_url: "https://platform-qr.png", upi_id: "finearts@upi" }
-              }
-            }
-          }
-        }
+       
       }
     },
 
@@ -1300,24 +754,7 @@ export const swaggerDocument = {
             }
           }
         },
-        responses: {
-          200: {
-            description: "Payment submitted for verification",
-            content: {
-              "application/json": {
-                example: { message: "Payment submitted for verification", payment_id: 10 }
-              }
-            }
-          },
-          401: {
-            description: "Unauthorized",
-            content: {
-              "application/json": {
-                example: { success: false, message: "Missing Authorization token" }
-              }
-            }
-          }
-        }
+       
       }
     },
 
@@ -1326,24 +763,7 @@ export const swaggerDocument = {
         tags: ["8. Payments (QR Flow)"],
         summary: "Get My Payments",
         security: [{ FirebaseAuth: [] }],
-        responses: {
-          200: {
-            description: "Payment history",
-            content: {
-              "application/json": {
-                example: { payments: [{ id: 10, amount: 1500, status: "PENDING", utr_number: "UTR123456789", created_at: "2026-05-01T10:00:00Z" }] }
-              }
-            }
-          },
-          401: {
-            description: "Unauthorized",
-            content: {
-              "application/json": {
-                example: { success: false, message: "Missing Authorization token" }
-              }
-            }
-          }
-        }
+        
       }
     },
 
@@ -1351,25 +771,8 @@ export const swaggerDocument = {
       get: {
         tags: ["8. Payments (QR Flow)"],
         summary: "Get Pending Payments (Admin / Institute)",
-        security: [{ FirebaseAuth: [] }],  // ✅ FIX: was MISSING
-        responses: {
-          200: {
-            description: "Pending payments",
-            content: {
-              "application/json": {
-                example: { payments: [{ id: 10, user_id: 5, amount: 1500, status: "PENDING" }] }
-              }
-            }
-          },
-          401: {
-            description: "Unauthorized",
-            content: {
-              "application/json": {
-                example: { success: false, message: "Missing Authorization token" }
-              }
-            }
-          }
-        }
+        security: [{ FirebaseAuth: [] }],
+       
       }
     },
 
@@ -1379,10 +782,7 @@ export const swaggerDocument = {
         summary: "Verify Payment (Admin)",
         security: [{ AdminAuth: [] }],
         parameters: [{ name: "id", in: "path", required: true, schema: { type: "integer", example: 1 } }],
-        responses: {
-          200: { description: "Payment verified", content: { "application/json": { example: { message: "Payment verified and booking confirmed" } } } },
-          401: { description: "Unauthorized", content: { "application/json": { example: { success: false, message: "Missing Authorization token" } } } }
-        }
+        
       }
     },
 
@@ -1400,10 +800,7 @@ export const swaggerDocument = {
             }
           }
         },
-        responses: {
-          200: { description: "Payment rejected", content: { "application/json": { example: { message: "Payment rejected" } } } },
-          401: { description: "Unauthorized", content: { "application/json": { example: { success: false, message: "Missing Authorization token" } } } }
-        }
+        
       }
     },
 
@@ -1432,17 +829,7 @@ export const swaggerDocument = {
             }
           }
         },
-        responses: {
-          201: {
-            description: "Booking created",
-            content: {
-              "application/json": {
-                example: { message: "Booking created", booking: { id: 7, status: "PENDING", class_id: 1 } }
-              }
-            }
-          },
-          401: { description: "Unauthorized", content: { "application/json": { example: { success: false, message: "Missing Authorization token" } } } }
-        }
+       
       }
     },
 
@@ -1451,17 +838,7 @@ export const swaggerDocument = {
         tags: ["9. Bookings"],
         summary: "Get My Bookings",
         security: [{ FirebaseAuth: [] }],
-        responses: {
-          200: {
-            description: "User bookings",
-            content: {
-              "application/json": {
-                example: { bookings: [{ id: 7, class_id: 1, status: "CONFIRMED", start_date: "2026-06-01" }] }
-              }
-            }
-          },
-          401: { description: "Unauthorized", content: { "application/json": { example: { success: false, message: "Missing Authorization token" } } } }
-        }
+       
       }
     },
 
@@ -1471,17 +848,7 @@ export const swaggerDocument = {
         summary: "Get Booking by ID",
         security: [{ FirebaseAuth: [] }],
         parameters: [{ name: "id", in: "path", required: true, schema: { type: "integer", example: 1 } }],
-        responses: {
-          200: {
-            description: "Booking detail",
-            content: {
-              "application/json": {
-                example: { booking: { id: 7, class_id: 1, status: "CONFIRMED", amount: 1500 } }
-              }
-            }
-          },
-          401: { description: "Unauthorized", content: { "application/json": { example: { success: false, message: "Missing Authorization token" } } } }
-        }
+       
       }
     },
 
@@ -1491,10 +858,7 @@ export const swaggerDocument = {
         summary: "Cancel Booking",
         security: [{ FirebaseAuth: [] }],
         parameters: [{ name: "id", in: "path", required: true, schema: { type: "integer", example: 1 } }],
-        responses: {
-          200: { description: "Booking cancelled", content: { "application/json": { example: { message: "Booking cancelled" } } } },
-          401: { description: "Unauthorized", content: { "application/json": { example: { success: false, message: "Missing Authorization token" } } } }
-        }
+       
       }
     },
 
@@ -1504,10 +868,7 @@ export const swaggerDocument = {
         summary: "Confirm Booking",
         security: [{ FirebaseAuth: [] }],
         parameters: [{ name: "id", in: "path", required: true, schema: { type: "integer", example: 1 } }],
-        responses: {
-          200: { description: "Booking confirmed", content: { "application/json": { example: { message: "Booking confirmed" } } } },
-          401: { description: "Unauthorized", content: { "application/json": { example: { success: false, message: "Missing Authorization token" } } } }
-        }
+        
       }
     },
 
@@ -1517,10 +878,7 @@ export const swaggerDocument = {
         summary: "Complete Booking",
         security: [{ FirebaseAuth: [] }],
         parameters: [{ name: "id", in: "path", required: true, schema: { type: "integer", example: 1 } }],
-        responses: {
-          200: { description: "Booking completed", content: { "application/json": { example: { message: "Booking completed" } } } },
-          401: { description: "Unauthorized", content: { "application/json": { example: { success: false, message: "Missing Authorization token" } } } }
-        }
+       
       }
     },
 
@@ -1528,12 +886,9 @@ export const swaggerDocument = {
       get: {
         tags: ["9. Bookings"],
         summary: "Get Bookings by Class",
-        security: [{ FirebaseAuth: [] }],  // ✅ FIX: was MISSING
+        security: [{ FirebaseAuth: [] }],
         parameters: [{ name: "id", in: "path", required: true, schema: { type: "integer", example: 1 } }],
-        responses: {
-          200: { description: "Class bookings", content: { "application/json": { example: { bookings: [{ id: 7, user_id: 5, status: "CONFIRMED" }] } } } },
-          401: { description: "Unauthorized", content: { "application/json": { example: { success: false, message: "Missing Authorization token" } } } }
-        }
+       
       }
     },
 
@@ -1541,12 +896,9 @@ export const swaggerDocument = {
       get: {
         tags: ["9. Bookings"],
         summary: "Get Bookings by Trainer",
-        security: [{ FirebaseAuth: [] }],  // ✅ FIX: was MISSING
+        security: [{ FirebaseAuth: [] }],
         parameters: [{ name: "id", in: "path", required: true, schema: { type: "integer", example: 1 } }],
-        responses: {
-          200: { description: "Trainer bookings", content: { "application/json": { example: { bookings: [{ id: 7, class_id: 1, status: "CONFIRMED" }] } } } },
-          401: { description: "Unauthorized", content: { "application/json": { example: { success: false, message: "Missing Authorization token" } } } }
-        }
+      
       }
     },
 
@@ -1554,12 +906,9 @@ export const swaggerDocument = {
       get: {
         tags: ["9. Bookings"],
         summary: "Get Bookings by Institute",
-        security: [{ FirebaseAuth: [] }],  // ✅ FIX: was MISSING
+        security: [{ FirebaseAuth: [] }],
         parameters: [{ name: "id", in: "path", required: true, schema: { type: "integer", example: 1 } }],
-        responses: {
-          200: { description: "Institute bookings", content: { "application/json": { example: { bookings: [{ id: 7, class_id: 1, status: "CONFIRMED" }] } } } },
-          401: { description: "Unauthorized", content: { "application/json": { example: { success: false, message: "Missing Authorization token" } } } }
-        }
+        
       }
     },
 
@@ -1576,17 +925,7 @@ export const swaggerDocument = {
             }
           }
         },
-        responses: {
-          200: {
-            description: "Eligibility result",
-            content: {
-              "application/json": {
-                example: { eligible: true, message: "You can book this class" }
-              }
-            }
-          },
-          401: { description: "Unauthorized", content: { "application/json": { example: { success: false, message: "Missing Authorization token" } } } }
-        }
+       
       }
     },
 
@@ -1600,16 +939,7 @@ export const swaggerDocument = {
         parameters: [
           { name: "plan_type", in: "query", schema: { type: "string", enum: ["USER", "TRAINER", "INSTITUTE"], example: "USER" } }
         ],
-        responses: {
-          200: {
-            description: "Subscription plans",
-            content: {
-              "application/json": {
-                example: { plans: [{ id: 1, name: "Monthly Premium", price: 999, duration_days: 30, plan_type: "USER" }] }
-              }
-            }
-          }
-        }
+     
       },
       post: {
         tags: ["10. Subscriptions"],
@@ -1633,10 +963,7 @@ export const swaggerDocument = {
             }
           }
         },
-        responses: {
-          201: { description: "Plan created", content: { "application/json": { example: { message: "Plan created", plan: { id: 1, name: "Monthly Premium" } } } } },
-          401: { description: "Unauthorized", content: { "application/json": { example: { success: false, message: "Missing Authorization token" } } } }
-        }
+       
       }
     },
 
@@ -1645,9 +972,7 @@ export const swaggerDocument = {
         tags: ["10. Subscriptions"],
         summary: "Get Plan by ID (Public)",
         parameters: [{ name: "id", in: "path", required: true, schema: { type: "integer", example: 1 } }],
-        responses: {
-          200: { description: "Plan detail", content: { "application/json": { example: { plan: { id: 1, name: "Monthly Premium", price: 999, features: "..." } } } } }
-        }
+        
       },
       put: {
         tags: ["10. Subscriptions"],
@@ -1658,14 +983,19 @@ export const swaggerDocument = {
           required: true,
           content: {
             "application/json": {
-              schema: { type: "object", properties: { name: { type: "string", example: "Monthly Premium" }, price: { type: "number", example: 1199 }, duration_days: { type: "integer", example: 30 }, is_active: { type: "integer", example: 1 } } }
+              schema: {
+                type: "object",
+                properties: {
+                  name: { type: "string", example: "Monthly Premium" },
+                  price: { type: "number", example: 1199 },
+                  duration_days: { type: "integer", example: 30 },
+                  is_active: { type: "integer", example: 1 }
+                }
+              }
             }
           }
         },
-        responses: {
-          200: { description: "Plan updated", content: { "application/json": { example: { message: "Plan updated" } } } },
-          401: { description: "Unauthorized", content: { "application/json": { example: { success: false, message: "Missing Authorization token" } } } }
-        }
+       
       }
     },
 
@@ -1688,17 +1018,7 @@ export const swaggerDocument = {
             }
           }
         },
-        responses: {
-          200: {
-            description: "Subscribed successfully",
-            content: {
-              "application/json": {
-                example: { message: "Subscribed successfully", subscription: { id: 3, plan_id: 1, status: "ACTIVE", expires_at: "2026-06-01" } }
-              }
-            }
-          },
-          401: { description: "Unauthorized", content: { "application/json": { example: { success: false, message: "Missing Authorization token" } } } }
-        }
+       
       }
     },
 
@@ -1707,17 +1027,7 @@ export const swaggerDocument = {
         tags: ["10. Subscriptions"],
         summary: "Get My Active Subscription",
         security: [{ FirebaseAuth: [] }],
-        responses: {
-          200: {
-            description: "Active subscription",
-            content: {
-              "application/json": {
-                example: { subscription: { id: 3, plan: "Monthly Premium", expires_at: "2026-06-01", status: "ACTIVE" } }
-              }
-            }
-          },
-          401: { description: "Unauthorized", content: { "application/json": { example: { success: false, message: "Missing Authorization token" } } } }
-        }
+        
       }
     },
 
@@ -1727,10 +1037,7 @@ export const swaggerDocument = {
         summary: "Cancel Subscription",
         security: [{ FirebaseAuth: [] }],
         parameters: [{ name: "id", in: "path", required: true, schema: { type: "integer", example: 1 } }],
-        responses: {
-          200: { description: "Subscription cancelled", content: { "application/json": { example: { message: "Subscription cancelled" } } } },
-          401: { description: "Unauthorized", content: { "application/json": { example: { success: false, message: "Missing Authorization token" } } } }
-        }
+        
       }
     },
 
@@ -1766,19 +1073,13 @@ export const swaggerDocument = {
             }
           }
         },
-        responses: {
-          201: { description: "Coupon created", content: { "application/json": { example: { message: "Coupon created", coupon: { id: 1, code: "WELCOME20" } } } } },
-          401: { description: "Unauthorized", content: { "application/json": { example: { success: false, message: "Missing Authorization token" } } } }
-        }
+       
       },
       get: {
         tags: ["11. Coupons & Rewards"],
         summary: "List All Coupons (Admin)",
         security: [{ AdminAuth: [] }],
-        responses: {
-          200: { description: "All coupons", content: { "application/json": { example: { coupons: [{ id: 1, code: "WELCOME20", is_active: true, discount_type: "PERCENT" }] } } } },
-          401: { description: "Unauthorized", content: { "application/json": { example: { success: false, message: "Missing Authorization token" } } } }
-        }
+        
       }
     },
 
@@ -1796,10 +1097,7 @@ export const swaggerDocument = {
             }
           }
         },
-        responses: {
-          200: { description: "Coupon toggled", content: { "application/json": { example: { message: "Coupon status updated" } } } },
-          401: { description: "Unauthorized", content: { "application/json": { example: { success: false, message: "Missing Authorization token" } } } }
-        }
+      
       }
     },
 
@@ -1823,17 +1121,7 @@ export const swaggerDocument = {
             }
           }
         },
-        responses: {
-          200: {
-            description: "Coupon validation result",
-            content: {
-              "application/json": {
-                example: { valid: true, discount_amount: 150, final_amount: 1350 }
-              }
-            }
-          },
-          401: { description: "Unauthorized", content: { "application/json": { example: { success: false, message: "Missing Authorization token" } } } }
-        }
+       
       }
     },
 
@@ -1842,17 +1130,7 @@ export const swaggerDocument = {
         tags: ["11. Coupons & Rewards"],
         summary: "Get My Rewards & Points",
         security: [{ FirebaseAuth: [] }],
-        responses: {
-          200: {
-            description: "Rewards and points balance",
-            content: {
-              "application/json": {
-                example: { points_balance: 120, total_earned: 200, total_redeemed: 80 }
-              }
-            }
-          },
-          401: { description: "Unauthorized", content: { "application/json": { example: { success: false, message: "Missing Authorization token" } } } }
-        }
+       
       }
     },
 
@@ -1869,17 +1147,7 @@ export const swaggerDocument = {
             }
           }
         },
-        responses: {
-          200: {
-            description: "Points redeemed",
-            content: {
-              "application/json": {
-                example: { message: "Points redeemed", discount_amount: 5, remaining_points: 70 }
-              }
-            }
-          },
-          401: { description: "Unauthorized", content: { "application/json": { example: { success: false, message: "Missing Authorization token" } } } }
-        }
+       
       }
     },
 
@@ -1894,10 +1162,7 @@ export const swaggerDocument = {
         parameters: [
           { name: "status", in: "query", schema: { type: "string", enum: ["PENDING", "APPROVED", "REJECTED"], example: "PENDING" } }
         ],
-        responses: {
-          200: { description: "Institutes list", content: { "application/json": { example: { institutes: [{ id: 2, name: "Kalai Nilayam Fine Arts", status: "PENDING" }] } } } },
-          401: { description: "Unauthorized", content: { "application/json": { example: { success: false, message: "Missing Authorization token" } } } }
-        }
+        
       }
     },
 
@@ -1906,10 +1171,7 @@ export const swaggerDocument = {
         tags: ["12. Admin Panel"],
         summary: "Get Pending Institutes",
         security: [{ AdminAuth: [] }],
-        responses: {
-          200: { description: "Pending institutes", content: { "application/json": { example: { institutes: [{ id: 2, name: "Kalai Nilayam Fine Arts", approval_status: "PENDING" }] } } } },
-          401: { description: "Unauthorized", content: { "application/json": { example: { success: false, message: "Missing Authorization token" } } } }
-        }
+       
       }
     },
 
@@ -1919,10 +1181,7 @@ export const swaggerDocument = {
         summary: "Approve Institute",
         security: [{ AdminAuth: [] }],
         parameters: [{ name: "id", in: "path", required: true, schema: { type: "integer", example: 1 } }],
-        responses: {
-          200: { description: "Institute approved", content: { "application/json": { example: { message: "Institute approved" } } } },
-          401: { description: "Unauthorized", content: { "application/json": { example: { success: false, message: "Missing Authorization token" } } } }
-        }
+       
       }
     },
 
@@ -1940,10 +1199,7 @@ export const swaggerDocument = {
             }
           }
         },
-        responses: {
-          200: { description: "Institute rejected", content: { "application/json": { example: { message: "Institute rejected" } } } },
-          401: { description: "Unauthorized", content: { "application/json": { example: { success: false, message: "Missing Authorization token" } } } }
-        }
+       
       }
     },
 
@@ -1955,10 +1211,7 @@ export const swaggerDocument = {
         parameters: [
           { name: "status", in: "query", schema: { type: "string", enum: ["PENDING", "APPROVED", "REJECTED"], example: "PENDING" } }
         ],
-        responses: {
-          200: { description: "Trainers list", content: { "application/json": { example: { trainers: [{ id: 3, full_name: "Priya Sharma", approval_status: "PENDING" }] } } } },
-          401: { description: "Unauthorized", content: { "application/json": { example: { success: false, message: "Missing Authorization token" } } } }
-        }
+       
       }
     },
 
@@ -1967,10 +1220,7 @@ export const swaggerDocument = {
         tags: ["12. Admin Panel"],
         summary: "Get Pending Trainers",
         security: [{ AdminAuth: [] }],
-        responses: {
-          200: { description: "Pending trainers", content: { "application/json": { example: { trainers: [{ id: 3, full_name: "Priya Sharma", status: "PENDING" }] } } } },
-          401: { description: "Unauthorized", content: { "application/json": { example: { success: false, message: "Missing Authorization token" } } } }
-        }
+       
       }
     },
 
@@ -1980,10 +1230,7 @@ export const swaggerDocument = {
         summary: "Approve Trainer",
         security: [{ AdminAuth: [] }],
         parameters: [{ name: "id", in: "path", required: true, schema: { type: "integer", example: 1 } }],
-        responses: {
-          200: { description: "Trainer approved", content: { "application/json": { example: { message: "Trainer approved" } } } },
-          401: { description: "Unauthorized", content: { "application/json": { example: { success: false, message: "Missing Authorization token" } } } }
-        }
+      
       }
     },
 
@@ -2001,10 +1248,7 @@ export const swaggerDocument = {
             }
           }
         },
-        responses: {
-          200: { description: "Trainer rejected", content: { "application/json": { example: { message: "Trainer rejected" } } } },
-          401: { description: "Unauthorized", content: { "application/json": { example: { success: false, message: "Missing Authorization token" } } } }
-        }
+       
       }
     },
 
@@ -2013,10 +1257,7 @@ export const swaggerDocument = {
         tags: ["12. Admin Panel"],
         summary: "Get Pending Classes",
         security: [{ AdminAuth: [] }],
-        responses: {
-          200: { description: "Pending classes", content: { "application/json": { example: { classes: [{ id: 5, title: "Bharatanatyam for Beginners", status: "PENDING" }] } } } },
-          401: { description: "Unauthorized", content: { "application/json": { example: { success: false, message: "Missing Authorization token" } } } }
-        }
+        
       }
     },
 
@@ -2026,10 +1267,7 @@ export const swaggerDocument = {
         summary: "Approve Class",
         security: [{ AdminAuth: [] }],
         parameters: [{ name: "id", in: "path", required: true, schema: { type: "integer", example: 1 } }],
-        responses: {
-          200: { description: "Class approved", content: { "application/json": { example: { message: "Class approved" } } } },
-          401: { description: "Unauthorized", content: { "application/json": { example: { success: false, message: "Missing Authorization token" } } } }
-        }
+       
       }
     },
 
@@ -2047,10 +1285,7 @@ export const swaggerDocument = {
             }
           }
         },
-        responses: {
-          200: { description: "Class rejected", content: { "application/json": { example: { message: "Class rejected" } } } },
-          401: { description: "Unauthorized", content: { "application/json": { example: { success: false, message: "Missing Authorization token" } } } }
-        }
+        
       }
     },
 
@@ -2062,10 +1297,7 @@ export const swaggerDocument = {
         tags: ["13. Dashboard"],
         summary: "User Dashboard",
         security: [{ FirebaseAuth: [] }],
-        responses: {
-          200: { description: "User dashboard data", content: { "application/json": { example: { active_bookings: 2, upcoming_classes: 3, subscription: "Monthly Premium", points: 120 } } } },
-          401: { description: "Unauthorized", content: { "application/json": { example: { success: false, message: "Missing Authorization token" } } } }
-        }
+        
       }
     },
 
@@ -2074,10 +1306,7 @@ export const swaggerDocument = {
         tags: ["13. Dashboard"],
         summary: "Trainer Dashboard",
         security: [{ FirebaseAuth: [] }],
-        responses: {
-          200: { description: "Trainer dashboard data", content: { "application/json": { example: { total_classes: 5, total_students: 48, total_earnings: 12000 } } } },
-          401: { description: "Unauthorized", content: { "application/json": { example: { success: false, message: "Missing Authorization token" } } } }
-        }
+        
       }
     },
 
@@ -2086,10 +1315,7 @@ export const swaggerDocument = {
         tags: ["13. Dashboard"],
         summary: "Institute Dashboard",
         security: [{ FirebaseAuth: [] }],
-        responses: {
-          200: { description: "Institute dashboard data", content: { "application/json": { example: { total_trainers: 8, total_classes: 12, total_bookings: 96 } } } },
-          401: { description: "Unauthorized", content: { "application/json": { example: { success: false, message: "Missing Authorization token" } } } }
-        }
+       
       }
     },
 
@@ -2097,11 +1323,8 @@ export const swaggerDocument = {
       get: {
         tags: ["13. Dashboard"],
         summary: "Admin Dashboard",
-        security: [{ AdminAuth: [] }],  // ✅ FIX: changed from FirebaseAuth to AdminAuth (admin route)
-        responses: {
-          200: { description: "Admin dashboard data", content: { "application/json": { example: { pending_institutes: 3, pending_trainers: 5, total_users: 240, total_revenue: 85000 } } } },
-          401: { description: "Unauthorized", content: { "application/json": { example: { success: false, message: "Missing Authorization token" } } } }
-        }
+        security: [{ AdminAuth: [] }],
+        
       }
     },
 
@@ -2109,11 +1332,8 @@ export const swaggerDocument = {
       get: {
         tags: ["13. Dashboard"],
         summary: "Admin Revenue Report",
-        security: [{ AdminAuth: [] }],  // ✅ FIX: changed from FirebaseAuth to AdminAuth (admin route)
-        responses: {
-          200: { description: "Revenue report", content: { "application/json": { example: { total_revenue: 85000, this_month: 12000, last_month: 10500 } } } },
-          401: { description: "Unauthorized", content: { "application/json": { example: { success: false, message: "Missing Authorization token" } } } }
-        }
+        security: [{ AdminAuth: [] }],
+        
       }
     },
 
@@ -2121,11 +1341,8 @@ export const swaggerDocument = {
       get: {
         tags: ["13. Dashboard"],
         summary: "Admin Bookings Summary",
-        security: [{ AdminAuth: [] }],  // ✅ FIX: changed from FirebaseAuth to AdminAuth (admin route)
-        responses: {
-          200: { description: "Bookings summary", content: { "application/json": { example: { total: 320, confirmed: 260, pending: 40, cancelled: 20 } } } },
-          401: { description: "Unauthorized", content: { "application/json": { example: { success: false, message: "Missing Authorization token" } } } }
-        }
+        security: [{ AdminAuth: [] }],
+       
       }
     },
 
@@ -2133,11 +1350,8 @@ export const swaggerDocument = {
       get: {
         tags: ["13. Dashboard"],
         summary: "Admin Users Summary",
-        security: [{ AdminAuth: [] }],  // ✅ FIX: changed from FirebaseAuth to AdminAuth (admin route)
-        responses: {
-          200: { description: "Users summary", content: { "application/json": { example: { total_users: 240, total_trainers: 35, total_institutes: 12 } } } },
-          401: { description: "Unauthorized", content: { "application/json": { example: { success: false, message: "Missing Authorization token" } } } }
-        }
+        security: [{ AdminAuth: [] }],
+      
       }
     },
 
@@ -2149,17 +1363,7 @@ export const swaggerDocument = {
         tags: ["14. Notifications"],
         summary: "Get My Notifications",
         security: [{ FirebaseAuth: [] }],
-        responses: {
-          200: {
-            description: "User notifications",
-            content: {
-              "application/json": {
-                example: { notifications: [{ id: 1, title: "Class Reminder", message: "Your class starts in 1 hour", is_read: false, created_at: "2026-05-01T09:00:00Z" }] }
-              }
-            }
-          },
-          401: { description: "Unauthorized", content: { "application/json": { example: { success: false, message: "Missing Authorization token" } } } }
-        }
+       
       }
     },
 
@@ -2169,10 +1373,7 @@ export const swaggerDocument = {
         summary: "Mark Notification as Read",
         security: [{ FirebaseAuth: [] }],
         parameters: [{ name: "id", in: "path", required: true, schema: { type: "integer", example: 1 } }],
-        responses: {
-          200: { description: "Notification marked as read", content: { "application/json": { example: { message: "Notification marked as read" } } } },
-          401: { description: "Unauthorized", content: { "application/json": { example: { success: false, message: "Missing Authorization token" } } } }
-        }
+       
       }
     },
 
@@ -2181,10 +1382,7 @@ export const swaggerDocument = {
         tags: ["14. Notifications"],
         summary: "Mark All Notifications as Read",
         security: [{ FirebaseAuth: [] }],
-        responses: {
-          200: { description: "All notifications marked as read", content: { "application/json": { example: { message: "All notifications marked as read" } } } },
-          401: { description: "Unauthorized", content: { "application/json": { example: { success: false, message: "Missing Authorization token" } } } }
-        }
+       
       }
     },
 
@@ -2209,10 +1407,7 @@ export const swaggerDocument = {
             }
           }
         },
-        responses: {
-          200: { description: "Notification sent", content: { "application/json": { example: { message: "Notification sent successfully" } } } },
-          401: { description: "Unauthorized", content: { "application/json": { example: { success: false, message: "Missing Authorization token" } } } }
-        }
+       
       }
     }
 
