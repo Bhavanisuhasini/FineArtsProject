@@ -1,8 +1,38 @@
+// import express from "express";
+// import { firebaseAuth } from "../middlewares/firebaseAuth.js";
+// import { accountAuth } from "../middlewares/accountAuth.js";
+// import {
+//   instituteLogin,
+//   instituteCompleteProfile,
+//   getInstituteProfile,
+//   listInstitutes,
+//   getInstituteTrainers,
+//   updateTrainerApproval,
+// } from "../controllers/institute.controller.js";
+
+// const router = express.Router();
+
+// // Auth
+// router.post("/login",            firebaseAuth, instituteLogin);
+// router.put("/complete-profile",  firebaseAuth, accountAuth, instituteCompleteProfile);
+// router.get("/profile",           firebaseAuth, accountAuth, getInstituteProfile);
+
+// // Public listing
+// router.get("/",                  listInstitutes);
+// router.get("/:id/trainers",      getInstituteTrainers);
+
+// // Institute manages its trainers
+// router.put("/trainers/:trainerId/approval", firebaseAuth, accountAuth, updateTrainerApproval);
+
+// export default router;
+
 import express from "express";
 import { firebaseAuth } from "../middlewares/firebaseAuth.js";
 import { accountAuth } from "../middlewares/accountAuth.js";
+
 import {
   instituteLogin,
+  createInstitute,
   instituteCompleteProfile,
   getInstituteProfile,
   listInstitutes,
@@ -12,16 +42,39 @@ import {
 
 const router = express.Router();
 
-// Auth
-router.post("/login",            firebaseAuth, instituteLogin);
-router.put("/complete-profile",  firebaseAuth, accountAuth, instituteCompleteProfile);
-router.get("/profile",           firebaseAuth, accountAuth, getInstituteProfile);
+/* ───────── AUTH ───────── */
+router.post("/login", firebaseAuth, instituteLogin);
 
-// Public listing
-router.get("/",                  listInstitutes);
-router.get("/:id/trainers",      getInstituteTrainers);
+/* ───────── CREATE MULTIPLE INSTITUTES (FIXED) ───────── */
+router.post("/create", firebaseAuth, accountAuth, createInstitute);
 
-// Institute manages its trainers
-router.put("/trainers/:trainerId/approval", firebaseAuth, accountAuth, updateTrainerApproval);
+/* ───────── PROFILE ───────── */
+router.put(
+  "/complete-profile",
+  firebaseAuth,
+  accountAuth,
+  instituteCompleteProfile
+);
+
+router.get(
+  "/profile",
+  firebaseAuth,
+  accountAuth,
+  getInstituteProfile
+);
+
+/* ───────── PUBLIC LIST ───────── */
+router.get("/", listInstitutes);
+
+/* IMPORTANT: trainers route must come BEFORE :id dynamic conflicts if any future */
+router.get("/:id/trainers", getInstituteTrainers);
+
+/* ───────── TRAINER APPROVAL ───────── */
+router.put(
+  "/trainers/:trainerId/approval",
+  firebaseAuth,
+  accountAuth,
+  updateTrainerApproval
+);
 
 export default router;

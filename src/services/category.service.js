@@ -1,24 +1,64 @@
 import { getPool, sql } from "../config/db.js";
 
+// export const getAllCategoriesService = async () => {
+//   const pool = getPool();
+
+//   const result = await pool.request().query(`
+//     SELECT 
+//       id,
+//       name,
+//       description,
+//       image_url,
+//       is_active,
+//       created_at,
+//       updated_at
+//     FROM categories
+//     WHERE is_active = 1
+//     ORDER BY id DESC
+//   `);
+
+//   return result.recordset;
+// };
+
 export const getAllCategoriesService = async () => {
   const pool = getPool();
 
-  const result = await pool.request().query(`
-    SELECT 
+  // Categories
+  const categoriesResult = await pool.request().query(`
+    SELECT
       id,
       name,
       description,
-      image_url,
-      is_active,
-      created_at,
-      updated_at
+      image_url AS image,
+      emoji,
+      color
     FROM categories
     WHERE is_active = 1
     ORDER BY id DESC
   `);
 
-  return result.recordset;
+  const categories = categoriesResult.recordset;
+
+  // Attach subcategories
+  for (const category of categories) {
+    const subResult = await pool.request()
+      .input("category_id", sql.BigInt, category.id)
+      .query(`
+        SELECT
+          id,
+          name,
+          image
+        FROM subcategories
+        WHERE category_id = @category_id
+        ORDER BY id ASC
+      `);
+
+    category.subcategories = subResult.recordset;
+  }
+
+  return categories;
 };
+
 
 export const getCategoryByIdService = async (id) => {
   const pool = getPool();
