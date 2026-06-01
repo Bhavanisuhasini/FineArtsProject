@@ -1,23 +1,62 @@
 import express from "express";
-import { firebaseAuth } from "../middlewares/firebaseAuth.js";
-import { accountAuth } from "../middlewares/accountAuth.js";
+
 import {
   trainerLogin,
   trainerCompleteProfile,
   getTrainerPublicProfile,
   getMyTrainerProfile,
   updateTrainerQR,
+  getAllTrainers,
 } from "../controllers/trainer.controller.js";
+
+import { firebaseAuth } from "../middlewares/firebaseAuth.js";
+import { accountAuth } from "../middlewares/accountAuth.js";
 
 const router = express.Router();
 
-// Public
-router.get("/:id",               getTrainerPublicProfile);
+/* =========================
+   AUTH / LOGIN
+========================= */
+router.post("/login", firebaseAuth, trainerLogin);
 
-// Authenticated
-router.post("/login",            firebaseAuth, trainerLogin);
-router.put("/complete-profile",  firebaseAuth, accountAuth, trainerCompleteProfile);
-router.get("/me/profile",        firebaseAuth, accountAuth, getMyTrainerProfile);
-router.put("/me/qr",             firebaseAuth, accountAuth, updateTrainerQR);
+/* =========================
+   COMPLETE PROFILE
+========================= */
+router.post(
+  "/complete-profile",
+  firebaseAuth,
+  accountAuth,
+  trainerCompleteProfile
+);
+
+/* =========================
+   MY TRAINERS (FIXED FOR MULTI)
+========================= */
+router.get(
+  "/me",
+  firebaseAuth,
+  accountAuth,
+  getMyTrainerProfile
+);
+
+/* =========================
+   UPDATE QR
+========================= */
+router.put(
+  "/update-qr",
+  firebaseAuth,
+  accountAuth,
+  updateTrainerQR
+);
+
+/* =========================
+   ALL TRAINERS
+========================= */
+router.get("/", getAllTrainers);
+
+/* =========================
+   SINGLE TRAINER PROFILE
+========================= */
+router.get("/:id", getTrainerPublicProfile);
 
 export default router;

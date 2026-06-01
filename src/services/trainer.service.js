@@ -1,10 +1,14 @@
 import { getPool, sql } from "../config/db.js";
 
+/* =========================
+   SIGNUP (MULTI-TRAINER SAFE)
+========================= */
 export const trainerSignupService = async (firebaseUser, body) => {
   const pool = getPool();
   const { uid, email, phone_number } = firebaseUser;
 
-  let accountResult = await pool.request()
+  // GET OR CREATE ACCOUNT
+  const accountResult = await pool.request()
     .input("firebase_uid", sql.NVarChar(255), uid)
     .query(`SELECT * FROM accounts WHERE firebase_uid = @firebase_uid`);
 
@@ -19,7 +23,7 @@ export const trainerSignupService = async (firebaseUser, body) => {
       .query(`
         MERGE accounts AS target
         USING (SELECT @firebase_uid AS firebase_uid) AS source
-          ON target.firebase_uid = source.firebase_uid
+        ON target.firebase_uid = source.firebase_uid
         WHEN NOT MATCHED THEN
           INSERT (firebase_uid, email, phone_number, role, is_active, is_verified)
           VALUES (@firebase_uid, @email, @phone_number, @role, 1, 1);
@@ -28,11 +32,13 @@ export const trainerSignupService = async (firebaseUser, body) => {
     const fetched = await pool.request()
       .input("firebase_uid", sql.NVarChar(255), uid)
       .query(`SELECT * FROM accounts WHERE firebase_uid = @firebase_uid`);
+
     account = fetched.recordset[0];
   } else {
     account = accountResult.recordset[0];
   }
 
+  // ROLE ENSURE
   await pool.request()
     .input("account_id", sql.BigInt, account.id)
     .query(`
@@ -44,17 +50,7 @@ export const trainerSignupService = async (firebaseUser, body) => {
       VALUES (@account_id, 'TRAINER', 'ACTIVE')
     `);
 
-  const existing = await pool.request()
-    .input("account_id", sql.BigInt, account.id)
-    .query(`SELECT * FROM trainers WHERE account_id = @account_id`);
-
-  if (existing.recordset.length > 0) {
-    return {
-      account,
-      trainer: existing.recordset[0]
-    };
-  }
-
+  // ✅ MULTI-TRAINER: ALWAYS CREATE NEW TRAINER
   const result = await pool.request()
     .input("account_id", sql.BigInt, account.id)
     .input("full_name", sql.NVarChar(150), body.full_name || null)
@@ -63,14 +59,24 @@ export const trainerSignupService = async (firebaseUser, body) => {
     .query(`
       INSERT INTO trainers
       (
-        account_id, full_name, email, phone_number,
-        approval_status, is_profile_completed, is_active
+        account_id,
+        full_name,
+        email,
+        phone_number,
+        approval_status,
+        is_profile_completed,
+        is_active
       )
       OUTPUT INSERTED.*
       VALUES
       (
-        @account_id, @full_name, @email, @phone_number,
-        'PENDING', 0, 1
+        @account_id,
+        @full_name,
+        @email,
+        @phone_number,
+        'PENDING',
+        0,
+        1
       )
     `);
 
@@ -80,24 +86,31 @@ export const trainerSignupService = async (firebaseUser, body) => {
   };
 };
 
+
+/* =========================
+   SIGNIN (ALL TRAINERS)
+========================= */
 export const trainerSigninService = async (accountId) => {
   const pool = getPool();
 
   const result = await pool.request()
     .input("account_id", sql.BigInt, accountId)
     .query(`
-      SELECT * FROM trainers
+      SELECT *
+      FROM trainers
       WHERE account_id = @account_id
+      ORDER BY created_at DESC
     `);
 
-  if (result.recordset.length === 0) {
-    throw new Error("Trainer profile not found. Please signup first.");
-  }
-
-  return result.recordset[0];
+  return result.recordset;
 };
 
-export const completeTrainerProfileService = async (accountId, body) => {
+
+/* =========================
+   COMPLETE PROFILE (FIXED)
+   -> MUST USE trainer_id
+========================= */
+export const completeTrainerProfileService = async (trainerId, body) => {
   const pool = getPool();
 
   const {
@@ -113,12 +126,8 @@ export const completeTrainerProfileService = async (accountId, body) => {
     subcategory_id
   } = body;
 
-  if (!full_name || !email || !phone_number || !category_id) {
-    throw new Error("Please fill all required trainer profile fields");
-  }
-
   const trainerResult = await pool.request()
-    .input("account_id", sql.BigInt, accountId)
+    .input("trainer_id", sql.BigInt, trainerId)
     .input("institute_id", sql.BigInt, institute_id || null)
     .input("full_name", sql.NVarChar(150), full_name)
     .input("bio", sql.NVarChar(1000), bio || null)
@@ -141,29 +150,73 @@ export const completeTrainerProfileService = async (accountId, body) => {
         is_profile_completed = 1,
         updated_at = SYSDATETIME()
       OUTPUT INSERTED.*
-      WHERE account_id = @account_id
+      WHERE id = @trainer_id
     `);
-
-  if (trainerResult.recordset.length === 0) {
-    throw new Error("Trainer profile not found");
-  }
 
   const trainer = trainerResult.recordset[0];
 
+  // remove old skills
   await pool.request()
-    .input("trainer_id", sql.BigInt, trainer.id)
-    .query(`DELETE FROM trainer_specializations WHERE trainer_id = @trainer_id`);
+    .input("trainer_id", sql.BigInt, trainerId)
+    .query(`
+      DELETE FROM trainer_specializations
+      WHERE trainer_id = @trainer_id
+    `);
 
+  // add new skill
   await pool.request()
-    .input("trainer_id", sql.BigInt, trainer.id)
+    .input("trainer_id", sql.BigInt, trainerId)
     .input("category_id", sql.BigInt, category_id)
     .input("subcategory_id", sql.BigInt, subcategory_id || null)
     .query(`
       INSERT INTO trainer_specializations
       (trainer_id, category_id, subcategory_id)
-      VALUES
-      (@trainer_id, @category_id, @subcategory_id)
+      VALUES (@trainer_id, @category_id, @subcategory_id)
     `);
 
   return trainer;
+};
+
+
+/* =========================
+   GET ALL TRAINERS
+========================= */
+export const getTrainersService = async () => {
+  const pool = getPool();
+
+  const result = await pool.request().query(`
+    SELECT 
+      t.*,
+      ISNULL(b.booked_count, 0) AS booked_count
+    FROM trainers t
+    LEFT JOIN (
+      SELECT trainer_id, COUNT(*) AS booked_count
+      FROM bookings
+      WHERE status = 'CONFIRMED'
+      GROUP BY trainer_id
+    ) b ON b.trainer_id = t.id
+  `);
+
+  const trainers = result.recordset;
+
+  return trainers;
+};
+
+
+/* =========================
+   GET MY TRAINERS (MULTI SAFE)
+========================= */
+export const getMyTrainerProfileService = async (accountId) => {
+  const pool = getPool();
+
+  const result = await pool.request()
+    .input("account_id", sql.BigInt, accountId)
+    .query(`
+      SELECT *
+      FROM trainers
+      WHERE account_id = @account_id
+      ORDER BY created_at DESC
+    `);
+
+  return result.recordset;
 };

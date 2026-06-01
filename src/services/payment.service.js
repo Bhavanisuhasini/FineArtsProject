@@ -1,6 +1,6 @@
 import { getPool, sql } from "../config/db.js";
 import { recordCouponUsage, earnPointsService, POINTS_PER_BOOKING } from "./coupon.service.js";
-import { getUserSubscriptionDiscountService } from "./Subscription.service.js";
+// import { getUserSubscriptionDiscountService } from "./Subscription.service.js";
 
 /*
   SQL — run once in SSMS if columns are missing:

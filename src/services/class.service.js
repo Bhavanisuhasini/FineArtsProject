@@ -188,83 +188,400 @@ export const createClassByTrainerService = async (accountId, body) => {
 ───────────────────────────────────────────────────────────────────────────── */
 export const listClassesService = async (query) => {
   const pool = getPool();
+
   const {
-    category_id, subcategory_id, institute_id, trainer_id,
-    level, mode, min_price, max_price, city,
-    page = 1, limit = 12,
+    category_id,
+    subcategory_id,
+    institute_id,
+    trainer_id,
+    level,
+    mode,
+    min_price,
+    max_price,
+    city,
+    search,
+    page = 1,
+    limit = 12,
   } = query;
 
   const offset = (parseInt(page) - 1) * parseInt(limit);
+
   const request = pool.request()
-    .input("limit",  sql.Int, parseInt(limit))
+    .input("limit", sql.Int, parseInt(limit))
     .input("offset", sql.Int, offset);
 
-  let where = `WHERE c.status = 'ACTIVE' AND c.is_active = 1`;
+  let where = `
+    WHERE c.status = 'ACTIVE'
+    AND c.is_active = 1
+  `;
 
-  if (category_id)    { where += ` AND c.category_id = @category_id`;       request.input("category_id",    sql.BigInt,        parseInt(category_id)); }
-  if (subcategory_id) { where += ` AND c.subcategory_id = @subcategory_id`; request.input("subcategory_id", sql.BigInt,        parseInt(subcategory_id)); }
-  if (institute_id)   { where += ` AND c.institute_id = @institute_id`;     request.input("institute_id",   sql.BigInt,        parseInt(institute_id)); }
-  if (trainer_id)     { where += ` AND c.trainer_id = @trainer_id`;         request.input("trainer_id",     sql.BigInt,        parseInt(trainer_id)); }
-  if (level)          { where += ` AND c.level = @level`;                   request.input("level",          sql.NVarChar(20),  level); }
-  if (mode)           { where += ` AND c.mode = @mode`;                     request.input("mode",           sql.NVarChar(20),  mode); }
-  if (min_price)      { where += ` AND c.price >= @min_price`;              request.input("min_price",      sql.Decimal(10,2), parseFloat(min_price)); }
-  if (max_price)      { where += ` AND c.price <= @max_price`;              request.input("max_price",      sql.Decimal(10,2), parseFloat(max_price)); }
-  if (city)           { where += ` AND i.city LIKE @city`;                  request.input("city",           sql.NVarChar(100), `%${city}%`); }
+  if (category_id) {
+    where += ` AND c.category_id = @category_id`;
+
+    request.input(
+      "category_id",
+      sql.BigInt,
+      parseInt(category_id)
+    );
+  }
+
+  if (subcategory_id) {
+    where += ` AND c.subcategory_id = @subcategory_id`;
+
+    request.input(
+      "subcategory_id",
+      sql.BigInt,
+      parseInt(subcategory_id)
+    );
+  }
+
+  if (institute_id) {
+    where += ` AND c.institute_id = @institute_id`;
+
+    request.input(
+      "institute_id",
+      sql.BigInt,
+      parseInt(institute_id)
+    );
+  }
+
+  if (trainer_id) {
+    where += ` AND c.trainer_id = @trainer_id`;
+
+    request.input(
+      "trainer_id",
+      sql.BigInt,
+      parseInt(trainer_id)
+    );
+  }
+
+  if (level) {
+    where += ` AND c.level = @level`;
+
+    request.input(
+      "level",
+      sql.NVarChar(20),
+      level
+    );
+  }
+
+  if (mode) {
+    where += ` AND c.mode = @mode`;
+
+    request.input(
+      "mode",
+      sql.NVarChar(20),
+      mode
+    );
+  }
+
+  if (min_price) {
+    where += ` AND c.price >= @min_price`;
+
+    request.input(
+      "min_price",
+      sql.Decimal(10, 2),
+      parseFloat(min_price)
+    );
+  }
+
+  if (max_price) {
+    where += ` AND c.price <= @max_price`;
+
+    request.input(
+      "max_price",
+      sql.Decimal(10, 2),
+      parseFloat(max_price)
+    );
+  }
+
+  if (city) {
+    where += ` AND i.city LIKE @city`;
+
+    request.input(
+      "city",
+      sql.NVarChar(100),
+      `%${city}%`
+    );
+  }
+
+  if (search) {
+  where += `
+    AND (
+      c.title LIKE @search
+      OR c.description LIKE @search
+      OR t.full_name LIKE @search
+      OR cat.name LIKE @search
+      OR sub.name LIKE @search
+      OR i.name LIKE @search
+    )
+  `;
+
+  request.input(
+    "search",
+    sql.NVarChar(200),
+    `%${search}%`
+  );
+}
 
   const result = await request.query(`
     SELECT
-      c.id, c.title, c.description, c.price, c.duration,
-      c.level, c.mode, c.max_students, c.status, c.created_at,
+      c.id,
+      c.title,
+      c.description,
+      c.price,
+      c.duration,
+      c.level,
+      c.mode,
+      c.max_students,
+      c.status,
+      c.created_at,
+
       cat.name AS category_name,
       sub.name AS subcategory_name,
-      t.full_name AS trainer_name, t.profile_image AS trainer_image,
-      i.name AS institute_name, i.logo AS institute_logo, i.city
+
+      t.id AS trainer_id,
+      t.full_name AS trainer_name,
+      t.profile_image AS trainer_image,
+
+      i.id AS institute_id,
+      i.name AS institute_name,
+      i.logo AS institute_logo,
+      i.banner_image,
+      i.city,
+      i.state,
+      i.rating,
+
+      sch.days_of_week,
+      sch.start_time,
+      sch.end_time
+
     FROM classes c
-    LEFT JOIN categories cat    ON c.category_id    = cat.id
-    LEFT JOIN subcategories sub  ON c.subcategory_id = sub.id
-    LEFT JOIN trainers t         ON c.trainer_id     = t.id
-    LEFT JOIN institutes i       ON c.institute_id   = i.id
+
+    LEFT JOIN categories cat
+      ON c.category_id = cat.id
+
+    LEFT JOIN subcategories sub
+      ON c.subcategory_id = sub.id
+
+    LEFT JOIN trainers t
+      ON c.trainer_id = t.id
+
+    LEFT JOIN institutes i
+      ON c.institute_id = i.id
+
+    LEFT JOIN class_schedules sch
+      ON sch.class_id = c.id
+
     ${where}
+
     ORDER BY c.created_at DESC
-    OFFSET @offset ROWS FETCH NEXT @limit ROWS ONLY
+
+    OFFSET @offset ROWS
+    FETCH NEXT @limit ROWS ONLY
   `);
 
-  return result.recordset;
-};
+  const classes = result.recordset;
 
+  return classes.map((c) => ({
+  id: c.id,
+
+  title: c.title,
+
+  category: c.category_name,
+
+  subcategory: c.subcategory_name,
+
+  trainerId: c.trainer_id,
+
+  trainer: c.trainer_name,
+
+  trainerImage: c.trainer_image,
+
+  rating: Number(c.rating),
+
+  reviews: c.max_students,
+
+  price: Number(c.price),
+
+  trialPrice: Number(c.trial_price),
+
+  image:
+    c.image ||
+    c.banner_image ||
+    c.institute_logo,
+
+  duration: `${c.duration} min`,
+
+  level:
+    c.level.charAt(0) +
+    c.level.slice(1).toLowerCase(),
+
+  students: c.max_students,
+
+  description: c.description,
+
+  highlights: c.highlights
+    ? c.highlights.split(",")
+    : [],
+
+  schedule: c.days_of_week
+    ? [`${c.days_of_week} ${c.start_time}`]
+    : [],
+
+  instituteId: c.institute_id,
+
+  instituteName: c.institute_name,
+
+  location: `${c.city}, ${c.state}`,
+
+  mode: c.mode,
+
+  createdAt: c.created_at,
+}));
+};
 /* ─────────────────────────────────────────────────────────────────────────────
    GET SINGLE CLASS
 ───────────────────────────────────────────────────────────────────────────── */
-export const getClassByIdService = async (classId) => {
+export const getClassByIdService = async (id) => {
   const pool = getPool();
 
-  const result = await pool.request()
-    .input("id", sql.BigInt, parseInt(classId))
+  const result = await pool
+    .request()
+    .input("id", sql.BigInt, parseInt(id))
     .query(`
       SELECT
-        c.*,
+        c.id,
+        c.title,
+        c.description,
+        c.price,
+        c.trial_price,
+        c.duration,
+        c.level,
+        c.mode,
+        c.max_students,
+        c.image,
+        c.highlights,
+        c.created_at,
+
         cat.name AS category_name,
         sub.name AS subcategory_name,
-        t.full_name AS trainer_name, t.bio AS trainer_bio,
-        t.profile_image AS trainer_image, t.experience_years,
-        i.name AS institute_name, i.logo AS institute_logo,
-        i.city, i.address
+
+        t.id AS trainer_id,
+        t.full_name AS trainer_name,
+        t.bio AS trainer_bio,
+        t.profile_image AS trainer_image,
+        t.experience_years,
+
+        i.id AS institute_id,
+        i.name AS institute_name,
+        i.logo AS institute_logo,
+        i.banner_image,
+        i.city,
+        i.state,
+
+        sch.days_of_week,
+        sch.start_time,
+        sch.end_time
+
       FROM classes c
-      LEFT JOIN categories cat    ON c.category_id    = cat.id
-      LEFT JOIN subcategories sub  ON c.subcategory_id = sub.id
-      LEFT JOIN trainers t         ON c.trainer_id     = t.id
-      LEFT JOIN institutes i       ON c.institute_id   = i.id
-      WHERE c.id = @id AND c.is_active = 1
+
+      LEFT JOIN categories cat
+        ON c.category_id = cat.id
+
+      LEFT JOIN subcategories sub
+        ON c.subcategory_id = sub.id
+
+      LEFT JOIN trainers t
+        ON c.trainer_id = t.id
+
+      LEFT JOIN institutes i
+        ON c.institute_id = i.id
+
+      LEFT JOIN class_schedules sch
+        ON sch.class_id = c.id
+
+      WHERE c.id = @id
     `);
 
-  if (result.recordset.length === 0) throw new Error("Class not found");
-  const classData = result.recordset[0];
+  if (!result.recordset.length) {
+    throw new Error("Class not found");
+  }
 
-  const schedule = await pool.request()
-    .input("class_id", sql.BigInt, parseInt(classId))
-    .query(`SELECT * FROM class_schedules WHERE class_id = @class_id`);
+  const c = result.recordset[0];
 
-  return { ...classData, schedules: schedule.recordset };
+  return {
+    id: c.id,
+
+    title: c.title,
+
+    description: c.description,
+
+    category: c.category_name,
+
+    subcategory: c.subcategory_name,
+
+    image:
+      c.image ||
+      c.banner_image ||
+      c.institute_logo,
+
+    price: Number(c.price || 0),
+
+    trialPrice: Number(c.trial_price || 0),
+
+    duration: c.duration,
+
+    level: c.level,
+
+    mode: c.mode,
+
+    students: c.max_students || 0,
+
+    highlights: c.highlights
+      ? c.highlights.split(",").map((h) => h.trim())
+      : [],
+
+  schedule: c.days_of_week
+  ? c.days_of_week.split(",").map((day) => {
+
+      const timeString = c.start_time
+        ? c.start_time.toString().substring(0, 5)
+        : "00:00";
+
+      let [hour, minute] = timeString.split(":");
+
+      hour = parseInt(hour);
+
+      const ampm = hour >= 12 ? "PM" : "AM";
+
+      hour = hour % 12 || 12;
+
+      return `${day.trim()} ${hour}${ampm}`;
+    })
+  : [],
+    trainerId: c.trainer_id,
+
+    trainer: c.trainer_name,
+
+    trainerBio: c.trainer_bio,
+
+    trainerImage: c.trainer_image,
+
+    experienceYears: c.experience_years,
+
+    instituteId: c.institute_id,
+
+    instituteName: c.institute_name,
+
+    instituteLogo: c.institute_logo,
+
+    instituteCity: c.city,
+
+    instituteState: c.state,
+
+    createdAt: c.created_at,
+  };
 };
 
 /* ─────────────────────────────────────────────────────────────────────────────
@@ -564,4 +881,78 @@ const insertSchedule = async (pool, classId, schedule) => {
       INSERT INTO class_schedules (class_id, start_date, end_date, start_time, end_time, days_of_week)
       VALUES (@class_id, @start_date, @end_date, @start_time, @end_time, @days_of_week)
     `);
+};
+
+
+
+/**
+ * GET CLASSES (REAL DATA)
+ */
+export const getClassesService = async (params) => {
+  const pool = getPool();
+
+  let query = `
+    SELECT 
+      c.id,
+      c.title,
+      c.subcategory,
+      c.category,
+      c.price,
+      c.duration,
+      c.level,
+      c.rating,
+      c.image,
+      c.institute_id,
+
+      -- trainer
+      t.name AS trainer,
+      t.image AS trainerImage,
+
+      -- students (fallback if null)
+      ISNULL(c.students, 0) AS students
+
+    FROM classes c
+    LEFT JOIN trainers t ON t.id = c.trainer_id
+    WHERE c.is_active = 1
+  `;
+
+  const request = pool.request();
+
+  // ================= FILTERS =================
+
+  if (params.institute_id) {
+    request.input("institute_id", sql.BigInt, params.institute_id);
+    query += " AND c.institute_id = @institute_id";
+  }
+
+  if (params.category && params.category !== "all") {
+    request.input("category", sql.NVarChar, params.category);
+    query += " AND LOWER(c.category) = LOWER(@category)";
+  }
+
+  if (params.subcategory && params.subcategory !== "all") {
+    request.input("subcategory", sql.NVarChar, params.subcategory);
+    query += " AND LOWER(c.subcategory) LIKE LOWER('%' + @subcategory + '%')";
+  }
+
+  if (params.search) {
+    request.input("search", sql.NVarChar, params.search);
+    query += `
+      AND (
+        c.title LIKE '%' + @search + '%'
+        OR c.subcategory LIKE '%' + @search + '%'
+        OR t.name LIKE '%' + @search + '%'
+      )
+    `;
+  }
+
+  // ================= SORT =================
+  if (params.sort === "price-high") query += " ORDER BY c.price DESC";
+  else if (params.sort === "price-low") query += " ORDER BY c.price ASC";
+  else if (params.sort === "rating") query += " ORDER BY c.rating DESC";
+  else query += " ORDER BY c.students DESC"; // popular default
+
+  const result = await request.query(query);
+
+  return result.recordset;
 };

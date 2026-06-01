@@ -1,8 +1,11 @@
+import sql from "mssql";
+import { getPool } from "../config/db.js";
 import {
   createClassByInstituteService,
   createClassByTrainerService,
   listClassesService,
   getClassByIdService,
+  getClassesService,
   updateClassService,
   deleteClassService,
   trainerApplyToInstituteService,
@@ -19,12 +22,19 @@ export const listClasses = async (req, res) => {
   } catch (e) { res.status(400).json({ success: false, message: e.message }); }
 };
 
-export const getClass = async (req, res) => {
+
+
+export const getClasses = async (req, res) => {
   try {
-    const data = await getClassByIdService(req.params.id);
-    res.json({ success: true, data });
-  } catch (e) { res.status(404).json({ success: false, message: e.message }); }
+    const data = await getClassesService(req.query);
+    res.json(data); // IMPORTANT: frontend expects ARRAY directly
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Failed to fetch classes" });
+  }
 };
+
+
 
 /* ── INSTITUTE ─────────────────────────────────────────────────────────── */
 export const createClassByInstitute = async (req, res) => {
@@ -92,4 +102,194 @@ export const applyToInstitute = async (req, res) => {
     const data = await trainerApplyToInstituteService(req.account.id, institute_id);
     res.json({ success: true, message: "Application submitted. Waiting for institute approval.", data });
   } catch (e) { res.status(400).json({ success: false, message: e.message }); }
+};
+
+
+
+/* =========================
+   CREATE CLASS
+========================= */
+
+export const createClass = async (req, res) => {
+  try {
+    const pool = getPool();
+
+    const {
+      title,
+      description,
+      category_id,
+      subcategory_id,
+      trainer_id,
+      institute_id,
+      price,
+      duration,
+      level,
+      mode,
+      max_students,
+      thumbnail,
+      demo_video_url,
+      schedule,
+      requirements,
+      language,
+      status,
+      is_active,
+    } = req.body;
+
+    const result = await pool.request()
+      .input("title", sql.NVarChar(255), title)
+      .input("description", sql.NVarChar(sql.MAX), description)
+      .input("category_id", sql.BigInt, category_id)
+      .input("subcategory_id", sql.BigInt, subcategory_id)
+      .input("trainer_id", sql.BigInt, trainer_id)
+      .input("institute_id", sql.BigInt, institute_id)
+      .input("price", sql.Decimal(10, 2), price)
+      .input("duration", sql.NVarChar(100), duration)
+      .input("level", sql.NVarChar(50), level)
+      .input("mode", sql.NVarChar(50), mode)
+      .input("max_students", sql.Int, max_students)
+      .input("thumbnail", sql.NVarChar(500), thumbnail)
+      .input("demo_video_url", sql.NVarChar(500), demo_video_url)
+      .input("schedule", sql.NVarChar(500), schedule)
+      .input("requirements", sql.NVarChar(sql.MAX), requirements)
+      .input("language", sql.NVarChar(100), language)
+      .input("status", sql.NVarChar(50), status)
+      .input("is_active", sql.Bit, is_active)
+      .query(`
+        INSERT INTO classes
+        (
+          title,
+          description,
+          category_id,
+          subcategory_id,
+          trainer_id,
+          institute_id,
+          price,
+          duration,
+          level,
+          mode,
+          max_students,
+          thumbnail,
+          demo_video_url,
+          schedule,
+          requirements,
+          language,
+          status,
+          is_active
+        )
+        OUTPUT INSERTED.*
+        VALUES
+        (
+          @title,
+          @description,
+          @category_id,
+          @subcategory_id,
+          @trainer_id,
+          @institute_id,
+          @price,
+          @duration,
+          @level,
+          @mode,
+          @max_students,
+          @thumbnail,
+          @demo_video_url,
+          @schedule,
+          @requirements,
+          @language,
+          @status,
+          @is_active
+        )
+      `);
+
+    res.status(201).json({
+      success: true,
+      message: "Class created successfully",
+      data: result.recordset[0],
+    });
+
+  } catch (error) {
+    console.error(error);
+
+    res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+  }
+};
+
+/* =========================
+   GET ALL CLASSES
+========================= */
+
+export const getAllClasses = async (req, res) => {
+  try {
+    const pool = getPool();
+
+    const result = await pool.request().query(`
+      SELECT * FROM classes
+      ORDER BY id DESC
+    `);
+
+    res.json(result.recordset);
+
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+  }
+};
+
+/* =========================
+   GET CLASS BY ID
+========================= */
+
+export const getClassById = async (req, res) => {
+  try {
+    const data = await getClassByIdService(req.params.id);
+
+    if (!data) {
+      return res.status(404).json({
+        success: false,
+        message: "Class not found"
+      });
+    }
+
+    res.json({
+      success: true,
+      data
+    });
+
+  } catch (err) {
+    res.status(500).json({
+      success: false,
+      message: err.message
+    });
+  }
+};
+
+
+export const getClassesByTrainer = async (req, res) => {
+  try {
+    const pool = getPool();
+
+    const result = await pool.request()
+      .input("trainer_id", sql.BigInt, req.params.trainerId)
+      .query(`
+        SELECT *
+        FROM classes
+        WHERE trainer_id = @trainer_id
+        ORDER BY id DESC
+      `);
+
+    res.json({
+      success: true,
+      data: result.recordset
+    });
+
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: error.message
+    });
+  }
 };

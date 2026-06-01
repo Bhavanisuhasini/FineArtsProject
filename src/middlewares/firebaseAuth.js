@@ -1,7 +1,9 @@
 import admin from "../config/firebase.js";
 
+
 export const firebaseAuth = async (req, res, next) => {
   try {
+    console.log("AUTH HEADER:", req.headers.authorization);
     const authHeader = req.headers.authorization;
 
     if (!authHeader || !authHeader.startsWith("Bearer ")) {

@@ -1,3 +1,220 @@
+// import { getPool, sql } from "../config/db.js";
+
+// export const getAllSubcategoriesService = async () => {
+//   const pool = getPool();
+
+//   const result = await pool.request().query(`
+//     SELECT 
+//       s.id,
+//       s.category_id,
+//       c.name AS category_name,
+//       s.name,
+//       s.description,
+//       s.image_url,
+//       s.is_active,
+//       s.created_at,
+//       s.updated_at
+//     FROM subcategories s
+//     INNER JOIN categories c ON s.category_id = c.id
+//     WHERE s.is_active = 1
+//     ORDER BY s.id DESC
+//   `);
+
+//   return result.recordset;
+// };
+
+// export const getSubcategoryByIdService = async (id) => {
+//   const pool = getPool();
+
+//   const result = await pool.request()
+//     .input("id", sql.BigInt, id)
+//     .query(`
+//       SELECT 
+//         s.id,
+//         s.category_id,
+//         c.name AS category_name,
+//         s.name,
+//         s.description,
+//         s.image_url,
+//         s.is_active,
+//         s.created_at,
+//         s.updated_at
+//       FROM subcategories s
+//       INNER JOIN categories c ON s.category_id = c.id
+//       WHERE s.id = @id AND s.is_active = 1
+//     `);
+
+//   return result.recordset[0];
+// };
+
+// export const getSubcategoriesByCategoryIdService = async (categoryId) => {
+//   const pool = getPool();
+
+//   const result = await pool.request()
+//     .input("categoryId", sql.BigInt, categoryId)
+//     .query(`
+//       SELECT 
+//         id,
+//         category_id,
+//         name,
+//         description,
+//         image_url,
+//         is_active,
+//         created_at,
+//         updated_at
+//       FROM subcategories
+//       WHERE category_id = @categoryId AND is_active = 1
+//       ORDER BY id DESC
+//     `);
+
+//   return result.recordset;
+// };
+
+// export const createSubcategoryService = async ({
+//   category_id,
+//   name,
+//   description,
+//   image_url,
+// }) => {
+//   const pool = getPool();
+
+//   const categoryCheck = await pool.request()
+//     .input("category_id", sql.BigInt, category_id)
+//     .query(`
+//       SELECT id
+//       FROM categories
+//       WHERE id = @category_id AND is_active = 1
+//     `);
+
+//   if (categoryCheck.recordset.length === 0) {
+//     throw new Error("Category not found");
+//   }
+
+//   const duplicate = await pool.request()
+//     .input("category_id", sql.BigInt, category_id)
+//     .input("name", sql.NVarChar(100), name)
+//     .query(`
+//       SELECT id
+//       FROM subcategories
+//       WHERE category_id = @category_id AND name = @name
+//     `);
+
+//   if (duplicate.recordset.length > 0) {
+//     throw new Error("Subcategory already exists under this category");
+//   }
+
+//   const result = await pool.request()
+//     .input("category_id", sql.BigInt, category_id)
+//     .input("name", sql.NVarChar(100), name)
+//     .input("description", sql.NVarChar(500), description || null)
+//     .input("image_url", sql.NVarChar(500), image_url || null)
+//     .query(`
+//       INSERT INTO subcategories (category_id, name, description, image_url)
+//       OUTPUT INSERTED.*
+//       VALUES (@category_id, @name, @description, @image_url)
+//     `);
+
+//   return result.recordset[0];
+// };
+
+// export const updateSubcategoryService = async (
+//   id,
+//   { category_id, name, description, image_url, is_active }
+// ) => {
+//   const pool = getPool();
+
+//   const check = await pool.request()
+//     .input("id", sql.BigInt, id)
+//     .query(`SELECT * FROM subcategories WHERE id = @id`);
+
+//   if (check.recordset.length === 0) {
+//     throw new Error("Subcategory not found");
+//   }
+
+//   const old = check.recordset[0];
+
+//   const updatedCategoryId = category_id ?? old.category_id;
+//   const updatedName = name ?? old.name;
+//   const updatedDescription = description ?? old.description;
+//   const updatedImage = image_url ?? old.image_url;
+//   const updatedIsActive =
+//     typeof is_active === "boolean" ? is_active : old.is_active;
+
+//   const categoryCheck = await pool.request()
+//     .input("category_id", sql.BigInt, updatedCategoryId)
+//     .query(`
+//       SELECT id
+//       FROM categories
+//       WHERE id = @category_id AND is_active = 1
+//     `);
+
+//   if (categoryCheck.recordset.length === 0) {
+//     throw new Error("Category not found");
+//   }
+
+//   const duplicate = await pool.request()
+//     .input("id", sql.BigInt, id)
+//     .input("category_id", sql.BigInt, updatedCategoryId)
+//     .input("name", sql.NVarChar(100), updatedName)
+//     .query(`
+//       SELECT id
+//       FROM subcategories
+//       WHERE category_id = @category_id
+//         AND name = @name
+//         AND id <> @id
+//     `);
+
+//   if (duplicate.recordset.length > 0) {
+//     throw new Error("Another subcategory with this name already exists under this category");
+//   }
+
+//   const result = await pool.request()
+//     .input("id", sql.BigInt, id)
+//     .input("category_id", sql.BigInt, updatedCategoryId)
+//     .input("name", sql.NVarChar(100), updatedName)
+//     .input("description", sql.NVarChar(500), updatedDescription)
+//     .input("image_url", sql.NVarChar(500), updatedImage)
+//     .input("is_active", sql.Bit, updatedIsActive)
+//     .query(`
+//       UPDATE subcategories
+//       SET
+//         category_id = @category_id,
+//         name = @name,
+//         description = @description,
+//         image_url = @image_url,
+//         is_active = @is_active,
+//         updated_at = SYSDATETIME()
+//       OUTPUT INSERTED.*
+//       WHERE id = @id
+//     `);
+
+//   return result.recordset[0];
+// };
+
+// export const deleteSubcategoryService = async (id) => {
+//   const pool = getPool();
+
+//   const check = await pool.request()
+//     .input("id", sql.BigInt, id)
+//     .query(`SELECT * FROM subcategories WHERE id = @id`);
+
+//   if (check.recordset.length === 0) {
+//     throw new Error("Subcategory not found");
+//   }
+
+//   await pool.request()
+//     .input("id", sql.BigInt, id)
+//     .query(`
+//       UPDATE subcategories
+//       SET is_active = 0,
+//           updated_at = SYSDATETIME()
+//       WHERE id = @id
+//     `);
+
+//   return true;
+// };
+
+
 import { getPool, sql } from "../config/db.js";
 
 export const getAllSubcategoriesService = async () => {
@@ -10,6 +227,7 @@ export const getAllSubcategoriesService = async () => {
       c.name AS category_name,
       s.name,
       s.description,
+      s.image_url AS image,
       s.image_url,
       s.is_active,
       s.created_at,
@@ -26,7 +244,8 @@ export const getAllSubcategoriesService = async () => {
 export const getSubcategoryByIdService = async (id) => {
   const pool = getPool();
 
-  const result = await pool.request()
+  const result = await pool
+    .request()
     .input("id", sql.BigInt, id)
     .query(`
       SELECT 
@@ -35,6 +254,7 @@ export const getSubcategoryByIdService = async (id) => {
         c.name AS category_name,
         s.name,
         s.description,
+        s.image_url AS image,
         s.image_url,
         s.is_active,
         s.created_at,
@@ -50,7 +270,8 @@ export const getSubcategoryByIdService = async (id) => {
 export const getSubcategoriesByCategoryIdService = async (categoryId) => {
   const pool = getPool();
 
-  const result = await pool.request()
+  const result = await pool
+    .request()
     .input("categoryId", sql.BigInt, categoryId)
     .query(`
       SELECT 
@@ -58,6 +279,7 @@ export const getSubcategoriesByCategoryIdService = async (categoryId) => {
         category_id,
         name,
         description,
+        image_url AS image,
         image_url,
         is_active,
         created_at,
@@ -78,7 +300,8 @@ export const createSubcategoryService = async ({
 }) => {
   const pool = getPool();
 
-  const categoryCheck = await pool.request()
+  const categoryCheck = await pool
+    .request()
     .input("category_id", sql.BigInt, category_id)
     .query(`
       SELECT id
@@ -90,28 +313,48 @@ export const createSubcategoryService = async ({
     throw new Error("Category not found");
   }
 
-  const duplicate = await pool.request()
+  const duplicate = await pool
+    .request()
     .input("category_id", sql.BigInt, category_id)
     .input("name", sql.NVarChar(100), name)
     .query(`
       SELECT id
       FROM subcategories
-      WHERE category_id = @category_id AND name = @name
+      WHERE category_id = @category_id
+        AND name = @name
+        AND is_active = 1
     `);
 
   if (duplicate.recordset.length > 0) {
     throw new Error("Subcategory already exists under this category");
   }
 
-  const result = await pool.request()
+  const result = await pool
+    .request()
     .input("category_id", sql.BigInt, category_id)
     .input("name", sql.NVarChar(100), name)
     .input("description", sql.NVarChar(500), description || null)
     .input("image_url", sql.NVarChar(500), image_url || null)
     .query(`
-      INSERT INTO subcategories (category_id, name, description, image_url)
+      INSERT INTO subcategories (
+        category_id,
+        name,
+        description,
+        image_url,
+        is_active,
+        created_at,
+        updated_at
+      )
       OUTPUT INSERTED.*
-      VALUES (@category_id, @name, @description, @image_url)
+      VALUES (
+        @category_id,
+        @name,
+        @description,
+        @image_url,
+        1,
+        SYSDATETIME(),
+        SYSDATETIME()
+      )
     `);
 
   return result.recordset[0];
@@ -123,9 +366,14 @@ export const updateSubcategoryService = async (
 ) => {
   const pool = getPool();
 
-  const check = await pool.request()
+  const check = await pool
+    .request()
     .input("id", sql.BigInt, id)
-    .query(`SELECT * FROM subcategories WHERE id = @id`);
+    .query(`
+      SELECT *
+      FROM subcategories
+      WHERE id = @id
+    `);
 
   if (check.recordset.length === 0) {
     throw new Error("Subcategory not found");
@@ -136,11 +384,12 @@ export const updateSubcategoryService = async (
   const updatedCategoryId = category_id ?? old.category_id;
   const updatedName = name ?? old.name;
   const updatedDescription = description ?? old.description;
-  const updatedImage = image_url ?? old.image_url;
+  const updatedImageUrl = image_url ?? old.image_url;
   const updatedIsActive =
     typeof is_active === "boolean" ? is_active : old.is_active;
 
-  const categoryCheck = await pool.request()
+  const categoryCheck = await pool
+    .request()
     .input("category_id", sql.BigInt, updatedCategoryId)
     .query(`
       SELECT id
@@ -152,7 +401,8 @@ export const updateSubcategoryService = async (
     throw new Error("Category not found");
   }
 
-  const duplicate = await pool.request()
+  const duplicate = await pool
+    .request()
     .input("id", sql.BigInt, id)
     .input("category_id", sql.BigInt, updatedCategoryId)
     .input("name", sql.NVarChar(100), updatedName)
@@ -162,18 +412,22 @@ export const updateSubcategoryService = async (
       WHERE category_id = @category_id
         AND name = @name
         AND id <> @id
+        AND is_active = 1
     `);
 
   if (duplicate.recordset.length > 0) {
-    throw new Error("Another subcategory with this name already exists under this category");
+    throw new Error(
+      "Another subcategory with this name already exists under this category"
+    );
   }
 
-  const result = await pool.request()
+  const result = await pool
+    .request()
     .input("id", sql.BigInt, id)
     .input("category_id", sql.BigInt, updatedCategoryId)
     .input("name", sql.NVarChar(100), updatedName)
     .input("description", sql.NVarChar(500), updatedDescription)
-    .input("image_url", sql.NVarChar(500), updatedImage)
+    .input("image_url", sql.NVarChar(500), updatedImageUrl)
     .input("is_active", sql.Bit, updatedIsActive)
     .query(`
       UPDATE subcategories
@@ -194,22 +448,20 @@ export const updateSubcategoryService = async (
 export const deleteSubcategoryService = async (id) => {
   const pool = getPool();
 
-  const check = await pool.request()
-    .input("id", sql.BigInt, id)
-    .query(`SELECT * FROM subcategories WHERE id = @id`);
-
-  if (check.recordset.length === 0) {
-    throw new Error("Subcategory not found");
-  }
-
-  await pool.request()
+  const result = await pool
+    .request()
     .input("id", sql.BigInt, id)
     .query(`
       UPDATE subcategories
-      SET is_active = 0,
-          updated_at = SYSDATETIME()
+      SET
+        is_active = 0,
+        updated_at = SYSDATETIME()
       WHERE id = @id
     `);
+
+  if (result.rowsAffected[0] === 0) {
+    throw new Error("Subcategory not found");
+  }
 
   return true;
 };
