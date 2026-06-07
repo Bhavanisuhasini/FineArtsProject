@@ -1,5 +1,5 @@
 import express from "express";
-import { firebaseAuth } from "../middlewares/firebaseAuth.js";
+import firebaseAuth  from "../middlewares/firebaseAuth.js";
 import { accountAuth } from "../middlewares/accountAuth.js";
 import { adminAuth } from "../middlewares/adminAuth.js";
 import {

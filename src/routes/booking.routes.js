@@ -1,23 +1,31 @@
 import express from "express";
-import * as controller from "../controllers/booking.controller.js";
-import { firebaseAuth } from "../middlewares/firebaseAuth.js";
-import { accountAuth } from "../middlewares/accountAuth.js";
+import firebaseAuth from "../middlewares/firebaseAuth.js";
+
+import {
+  createBookingHandler,
+  getUserBookingsHandler,
+  getBookingByIdHandler,
+  updateStatusHandler,
+  checkEligibilityHandler,
+} from "../controllers/booking.controller.js";
 
 const router = express.Router();
 
-router.post("/", firebaseAuth, accountAuth, controller.createBooking);
-router.get("/my", firebaseAuth, accountAuth, controller.getMyBookings);
+/* ── IMPORTANT: KEEP SPECIFIC ROUTES FIRST ───────────── */
 
-router.get("/class/:classId", controller.getByClass);
-router.get("/trainer/:trainerId", controller.getByTrainer);
-router.get("/institute/:instituteId", controller.getByInstitute);
+// ✅ GET all bookings of logged-in user
+router.get("/my-bookings", firebaseAuth, getUserBookingsHandler);
 
-router.get("/:id", firebaseAuth, accountAuth, controller.getBookingById);
+// ✅ CREATE booking
+router.post("/", firebaseAuth, createBookingHandler);
 
-router.patch("/:id/cancel", firebaseAuth, accountAuth, controller.cancelBooking);
-router.patch("/:id/confirm", firebaseAuth, accountAuth, controller.confirmBooking);
-router.patch("/:id/complete", firebaseAuth, accountAuth, controller.completeBooking);
+// ✅ CHECK eligibility
+router.post("/eligibility", firebaseAuth, checkEligibilityHandler);
 
-router.post("/check-eligibility", firebaseAuth, accountAuth, controller.checkEligibility);
+// ✅ UPDATE booking status
+router.patch("/:id/status", firebaseAuth, updateStatusHandler);
+
+// ✅ GET single booking (KEEP LAST)
+router.get("/:id", firebaseAuth, getBookingByIdHandler);
 
 export default router;

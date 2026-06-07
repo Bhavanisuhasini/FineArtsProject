@@ -5,7 +5,7 @@ import {
   markAllAsReadHandler,
   sendNotificationHandler,
 } from "../controllers/notification.controller.js";
-import { firebaseAuth } from "../middlewares/firebaseAuth.js";
+import firebaseAuth  from "../middlewares/firebaseAuth.js";
 import { accountAuth } from "../middlewares/accountAuth.js";
 
 const router = express.Router();

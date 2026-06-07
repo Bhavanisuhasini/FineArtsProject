@@ -1,99 +1,77 @@
-import {
-  getQRDetailsService,
-  submitPaymentService,
-  getPendingPaymentsService,
-  verifyPaymentService,
-  rejectPaymentService,
-  getMyPaymentsService,
-  getQRSettingsService,
-} from "../services/payment.service.js";
+import crypto from "crypto";
+import { razorpay } from "../utils/razorpay.js";
+import sql from "mssql";
 
-/* ── PUBLIC: GET QR + AMOUNT FOR A CLASS ───────────────────────────────── */
-export const getQRDetails = async (req, res) => {
+// ✅ CREATE ORDER
+export const createOrder = async (req, res) => {
   try {
-    const data = await getQRDetailsService(req.params.classId);
-    res.json({ success: true, data });
-  } catch (e) {
-    res.status(404).json({ success: false, message: e.message });
-  }
-};
+    const { amount, booking_id } = req.body;
 
-/* ── PUBLIC: GET PLATFORM QR SETTINGS ──────────────────────────────────── */
-export const getQRSettings = async (req, res) => {
-  try {
-    const data = await getQRSettingsService();
-    res.json({ success: true, data });
-  } catch (e) {
-    res.status(500).json({ success: false, message: "Could not fetch QR settings" });
-  }
-};
+    const options = {
+      amount: amount * 100, // paise
+      currency: "INR",
+      receipt: `receipt_${booking_id}`,
+    };
 
-/* ── USER: SUBMIT PAYMENT AFTER SCANNING QR ────────────────────────────── */
-export const submitPayment = async (req, res) => {
-  try {
-    const data = await submitPaymentService(req.account.id, req.body);
-    res.status(201).json({
-      success: true,
-      message: data.message,
-      data,
-    });
-  } catch (e) {
-    res.status(400).json({ success: false, message: e.message });
-  }
-};
+    const order = await razorpay.orders.create(options);
 
-/* ── USER: GET MY PAYMENT HISTORY ──────────────────────────────────────── */
-export const getMyPayments = async (req, res) => {
-  try {
-    const data = await getMyPaymentsService(req.account.id);
     res.json({
       success: true,
-      count: data.length,
-      data,
+      order_id: order.id,
+      amount: order.amount,
+      currency: order.currency,
+      key_id: process.env.RAZORPAY_KEY_ID,
     });
-  } catch (e) {
-    res.status(500).json({ success: false, message: "Could not fetch your payment history" });
+  } catch (err) {
+    console.error("Create Order Error:", err);
+    res.status(500).json({ message: "Order creation failed" });
   }
 };
 
-/* ── ADMIN/INSTITUTE: GET PENDING PAYMENTS TO VERIFY ───────────────────── */
-export const getPendingPayments = async (req, res) => {
-  try {
-    const data = await getPendingPaymentsService();
-    res.json({
-      success: true,
-      count: data.length,
-      message: data.length === 0 ? "No pending payments to verify" : `${data.length} payment(s) awaiting verification`,
-      data,
-    });
-  } catch (e) {
-    res.status(500).json({ success: false, message: "Could not fetch pending payments" });
-  }
-};
-
-/* ── ADMIN/INSTITUTE: VERIFY PAYMENT ───────────────────────────────────── */
+// ✅ VERIFY PAYMENT
 export const verifyPayment = async (req, res) => {
   try {
-    const data = await verifyPaymentService(req.account.id, req.params.id);
-    res.json({ success: true, message: data.message, data });
-  } catch (e) {
-    res.status(400).json({ success: false, message: e.message });
-  }
-};
+    const {
+      razorpay_order_id,
+      razorpay_payment_id,
+      razorpay_signature,
+      booking_id,
+    } = req.body;
 
-/* ── ADMIN/INSTITUTE: REJECT PAYMENT ────────────────────────────────────── */
-export const rejectPayment = async (req, res) => {
-  try {
-    const { reason } = req.body;
-    if (!reason || !reason.trim()) {
+    // 🔥 CRITICAL LINE
+    const body = razorpay_order_id + "|" + razorpay_payment_id;
+
+    const expectedSignature = crypto
+      .createHmac("sha256", process.env.RAZORPAY_KEY_SECRET)
+      .update(body)
+      .digest("hex");
+
+    if (expectedSignature !== razorpay_signature) {
       return res.status(400).json({
         success: false,
-        message: "Please provide a rejection reason so the user understands what went wrong",
+        message: "Invalid signature",
       });
     }
-    const data = await rejectPaymentService(req.account.id, req.params.id, reason);
-    res.json({ success: true, message: data.message, data });
-  } catch (e) {
-    res.status(400).json({ success: false, message: e.message });
+
+    // ✅ UPDATE BOOKING STATUS
+    await sql.query`
+      UPDATE bookings
+      SET payment_status = 'PAID',
+          payment_id = ${razorpay_payment_id},
+          order_id = ${razorpay_order_id}
+      WHERE id = ${booking_id}
+    `;
+
+    res.json({
+      success: true,
+      message: "Payment verified successfully",
+    });
+
+  } catch (err) {
+    console.error("Verify Error:", err);
+    res.status(500).json({
+      success: false,
+      message: "Verification failed",
+    });
   }
 };

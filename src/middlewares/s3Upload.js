@@ -11,7 +11,7 @@ export const upload = multer({
     const mime = allowed.test(file.mimetype);
 
     if (ext && mime) cb(null, true);
-    else cb(new Error("Only image files are allowed"));
+    else cb(new Error("Only image files allowed"));
   },
 });
 
@@ -24,8 +24,7 @@ const s3 = new S3Client({
 });
 
 export const uploadToS3 = async (file, folder) => {
-  const cleanName = file.originalname.replace(/\s+/g, "-");
-  const key = `${folder}/${Date.now()}-${cleanName}`;
+  const key = `${folder}/${Date.now()}-${file.originalname.replace(/\s+/g, "-")}`;
 
   await s3.send(
     new PutObjectCommand({
