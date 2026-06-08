@@ -16,6 +16,7 @@ import adminAuthRoutes from "./adminAuth.routes.js";
 
 import couponRoutes from "./coupon.routes.js";
 import sessionRoutes from "./session.routes.js";
+import testimonialRoutes from "./testimonial.routes.js";
 // import emailRoutes from "./email.routes.js";  // ✨ NEW
 
 const router = express.Router();
@@ -36,6 +37,8 @@ router.use("/notifications", notificationRoutes);
 router.use("/dashboard", dashboardRoutes);
 router.use("/coupons", couponRoutes);
 router.use("/sessions", sessionRoutes);
+router.use("/testimonials", testimonialRoutes);
+
 
 // router.use("/emails", emailRoutes);  // ✨ NEW
 

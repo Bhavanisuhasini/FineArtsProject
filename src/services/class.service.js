@@ -956,3 +956,78 @@ export const getClassesService = async (params) => {
 
   return result.recordset;
 };
+
+
+
+export const createClassByAdmin = async (req, res) => {
+  try {
+    const pool = getPool();
+
+    const {
+      title,
+      description,
+      category_id,
+      subcategory_id,
+      trainer_id,
+      institute_id,
+      price,
+      duration,
+      level,
+      mode,
+    } = req.body;
+
+    const result = await pool.request()
+      .input("title", sql.NVarChar(150), title)
+      .input("description", sql.NVarChar(1000), description || null)
+      .input("category_id", sql.BigInt, category_id)
+      .input("subcategory_id", sql.BigInt, subcategory_id || null)
+      .input("trainer_id", sql.BigInt, trainer_id || null)
+      .input("institute_id", sql.BigInt, institute_id || null)
+      .input("price", sql.Decimal(10,2), price || 0)
+      .input("duration", sql.Int, duration || 60)
+      .input("level", sql.NVarChar(20), level || "BEGINNER")
+      .input("mode", sql.NVarChar(20), mode || "ONLINE")
+      .query(`
+        INSERT INTO classes (
+          title,
+          description,
+          institute_id,
+          trainer_id,
+          category_id,
+          subcategory_id,
+          price,
+          duration,
+          level,
+          mode,
+          status,
+          is_active
+        )
+        OUTPUT INSERTED.*
+        VALUES (
+          @title,
+          @description,
+          @institute_id,
+          @trainer_id,
+          @category_id,
+          @subcategory_id,
+          @price,
+          @duration,
+          @level,
+          @mode,
+          'ACTIVE',
+          1
+        )
+      `);
+
+    res.status(201).json({
+      success: true,
+      data: result.recordset[0],
+    });
+
+  } catch (e) {
+    res.status(400).json({
+      success: false,
+      message: e.message,
+    });
+  }
+};
