@@ -1,228 +1,3 @@
-// // import {
-// //   instituteLoginService,
-// //   instituteCompleteProfileService,
-// //   getInstituteProfileService,
-// //   listInstitutesService,
-// //   getInstituteTrainersService,
-// //   updateTrainerApprovalService,
-// // } from "../services/institute.service.js";
-
-// // export const instituteLogin = async (req, res) => {
-// //   try {
-// //     const data = await instituteLoginService(req.firebaseUser);
-// //     res.json({ success: true, message: "Institute login successful", data });
-// //   } catch (e) {
-// //     res.status(400).json({ message: e.message });
-// //   }
-// // };
-
-// // export const instituteCompleteProfile = async (req, res) => {
-// //   try {
-// //     const data = await instituteCompleteProfileService(req.account.id, req.body);
-// //     res.json({ success: true, message: "Institute profile completed", data });
-// //   } catch (e) {
-// //     res.status(400).json({ message: e.message });
-// //   }
-// // };
-
-// // export const getInstituteProfile = async (req, res) => {
-// //   try {
-// //     const data = await getInstituteProfileService(req.account.id);
-// //     res.json({ success: true, data });
-// //   } catch (e) {
-// //     res.status(400).json({ message: e.message });
-// //   }
-// // };
-
-// // export const listInstitutes = async (req, res) => {
-// //   try {
-// //     const data = await listInstitutesService(req.query);
-// //     res.json({ success: true, data });
-// //   } catch (e) {
-// //     res.status(400).json({ message: e.message });
-// //   }
-// // };
-
-// // export const getInstituteTrainers = async (req, res) => {
-// //   try {
-// //     const data = await getInstituteTrainersService(req.params.id);
-// //     res.json({ success: true, data });
-// //   } catch (e) {
-// //     res.status(400).json({ message: e.message });
-// //   }
-// // };
-
-// // export const updateTrainerApproval = async (req, res) => {
-// //   try {
-// //     const { trainerId } = req.params;
-// //     const { status, reason } = req.body;
-// //     if (!["APPROVED", "REJECTED"].includes(status)) {
-// //       return res.status(400).json({ message: "status must be APPROVED or REJECTED" });
-// //     }
-// //     const data = await updateTrainerApprovalService(req.account.id, trainerId, status, reason);
-// //     res.json({ success: true, message: `Trainer ${status.toLowerCase()}`, data });
-// //   } catch (e) {
-// //     res.status(400).json({ message: e.message });
-// //   }
-
-
-// import {
-//   instituteLoginService,
-//   createInstituteService,
-//   instituteCompleteProfileService,
-//   getInstituteProfileService,
-//   listInstitutesService,
-//   getInstituteTrainersService,
-//   updateTrainerApprovalService,
-// } from "../services/institute.service.js";
-
-// /* ───────── LOGIN ───────── */
-// export const instituteLogin = async (req, res) => {
-//   try {
-//     const result = await instituteLoginService(req.user);
-
-//     return res.json({
-//       success: true,
-//       data: result,
-//     });
-//   } catch (err) {
-//     return res.status(500).json({
-//       success: false,
-//       message: err.message,
-//     });
-//   }
-// };
-
-// /* ───────── CREATE INSTITUTE (MULTI-INSTITUTE FIX) ───────── */
-
-
-// export const createInstitute = async (req, res) => {
-//   try {
-//     const accountId = req.account?.id;
-
-//     if (!accountId) {
-//       return res.status(401).json({
-//         success: false,
-//         message: "Unauthorized",
-//       });
-//     }
-
-//     const institute = await createInstituteService(accountId, req.body);
-
-//     return res.json({
-//       success: true,
-//       message: "Institute created successfully",
-//       data: institute,
-//     });
-//   } catch (err) {
-//     return res.status(500).json({
-//       success: false,
-//       message: err.message,
-//     });
-//   }
-// };
-
-// /* ───────── COMPLETE PROFILE ───────── */
-// export const instituteCompleteProfile = async (req, res) => {
-//   try {
-//     const accountId = req.account?.id;
-
-//     const result = await instituteCompleteProfileService(accountId, req.body);
-
-//     return res.json({
-//       success: true,
-//       data: result,
-//     });
-//   } catch (err) {
-//     return res.status(500).json({
-//       success: false,
-//       message: err.message,
-//     });
-//   }
-// };
-
-// /* ───────── GET PROFILE ───────── */
-// export const getInstituteProfile = async (req, res) => {
-//   try {
-//     const accountId = req.account?.id;
-
-//     const result = await getInstituteProfileService(accountId);
-
-//     return res.json({
-//       success: true,
-//       data: result,
-//     });
-//   } catch (err) {
-//     return res.status(500).json({
-//       success: false,
-//       message: err.message,
-//     });
-//   }
-// };
-
-// /* ───────── LIST INSTITUTES ───────── */
-// export const listInstitutes = async (req, res) => {
-//   try {
-//     const result = await listInstitutesService(req.query);
-
-//     return res.json({
-//       success: true,
-//       data: result,
-//     });
-//   } catch (err) {
-//     return res.status(500).json({
-//       success: false,
-//       message: err.message,
-//     });
-//   }
-// };
-
-// /* ───────── GET TRAINERS ───────── */
-// export const getInstituteTrainers = async (req, res) => {
-//   try {
-//     const instituteId = req.params.id;
-
-//     const trainers = await getInstituteTrainersService(instituteId);
-
-//     return res.json({
-//       success: true,
-//       data: trainers,
-//     });
-//   } catch (err) {
-//     return res.status(500).json({
-//       success: false,
-//       message: err.message,
-//     });
-//   }
-// };
-
-// /* ───────── UPDATE TRAINER APPROVAL ───────── */
-// export const updateTrainerApproval = async (req, res) => {
-//   try {
-//     const instituteAccountId = req.account?.id;
-//     const { trainerId } = req.params;
-//     const { status, reason } = req.body;
-
-//     const result = await updateTrainerApprovalService(
-//       instituteAccountId,
-//       trainerId,
-//       status,
-//       reason
-//     );
-
-//     return res.json({
-//       success: true,
-//       data: result,
-//     });
-//   } catch (err) {
-//     return res.status(500).json({
-//       success: false,
-//       message: err.message,
-//     });
-//   }
-// };
-
-
 
 import {
   instituteLoginService,
@@ -230,17 +5,22 @@ import {
   instituteCompleteProfileService,
   getInstituteProfileService,
   listInstitutesService,
-  getInstituteTrainersService,
-  updateTrainerApprovalService,
+  getAllInstitutesAdminService,
+  updateInstituteApprovalService,
+  getInstituteDashboardService,
+  getInstituteStudentsService,
+  getInstituteBookingsService,
+
+
 } from "../services/institute.service.js";
 
+/* LOGIN */
 export const instituteLogin = async (req, res) => {
   try {
     const result = await instituteLoginService(req.firebaseUser);
 
     return res.json({
       success: true,
-      message: "Institute login successful",
       data: result,
     });
   } catch (err) {
@@ -251,37 +31,17 @@ export const instituteLogin = async (req, res) => {
   }
 };
 
-export const createInstitute = async (req, res) => {
+/* PROFILE */
+export const createInstituteProfile = async (req, res) => {
+   
+  console.log("BODY =", req.body);
+  console.log("ACCOUNT =", req.account);
+
   try {
-    const accountId = req.account?.id;
-
-    if (!accountId) {
-      return res.status(401).json({
-        success: false,
-        message: "Unauthorized",
-      });
-    }
-
-    const institute = await createInstituteService(accountId, req.body);
-
-    return res.json({
-      success: true,
-      message: "Institute created successfully",
-      data: institute,
-    });
-  } catch (err) {
-    return res.status(500).json({
-      success: false,
-      message: err.message,
-    });
-  }
-};
-
-export const instituteCompleteProfile = async (req, res) => {
-  try {
-    const accountId = req.account?.id;
-
-    const result = await instituteCompleteProfileService(accountId, req.body);
+    const result = await instituteCompleteProfileService(
+      req.account?.id,
+      req.body
+    );
 
     return res.json({
       success: true,
@@ -297,67 +57,8 @@ export const instituteCompleteProfile = async (req, res) => {
 
 export const getInstituteProfile = async (req, res) => {
   try {
-    const accountId = req.account?.id;
-
-    const result = await getInstituteProfileService(accountId);
-
-    return res.json({
-      success: true,
-      data: result,
-    });
-  } catch (err) {
-    return res.status(500).json({
-      success: false,
-      message: err.message,
-    });
-  }
-};
-
-export const listInstitutes = async (req, res) => {
-  try {
-    const result = await listInstitutesService(req.query);
-
-    return res.json({
-      success: true,
-      data: result,
-    });
-  } catch (err) {
-    return res.status(500).json({
-      success: false,
-      message: err.message,
-    });
-  }
-};
-
-export const getInstituteTrainers = async (req, res) => {
-  try {
-    const instituteId = req.params.id;
-
-    const trainers = await getInstituteTrainersService(instituteId);
-
-    return res.json({
-      success: true,
-      data: trainers,
-    });
-  } catch (err) {
-    return res.status(500).json({
-      success: false,
-      message: err.message,
-    });
-  }
-};
-
-export const updateTrainerApproval = async (req, res) => {
-  try {
-    const instituteAccountId = req.account?.id;
-    const { trainerId } = req.params;
-    const { status, reason } = req.body;
-
-    const result = await updateTrainerApprovalService(
-      instituteAccountId,
-      trainerId,
-      status,
-      reason
+    const result = await getInstituteProfileService(
+      req.account?.id
     );
 
     return res.json({
@@ -370,4 +71,299 @@ export const updateTrainerApproval = async (req, res) => {
       message: err.message,
     });
   }
+};
+
+/* APPROVAL REQUEST */
+export const submitApprovalRequest = async (req, res) => {
+  try {
+    return res.json({
+      success: true,
+      message: "Approval request submitted",
+    });
+  } catch (err) {
+    return res.status(500).json({
+      success: false,
+      message: err.message,
+    });
+  }
+};
+
+/* DASHBOARD */
+export const getInstituteDashboard = async (
+  req,
+  res
+) => {
+  try {
+
+    console.log(
+      "ACCOUNT =",
+      req.account
+    );
+
+    const dashboard =
+      await getInstituteDashboardService(
+        req.account.id
+      );
+
+    return res.json({
+      success: true,
+      data: dashboard,
+    });
+  } catch (err) {
+    return res.status(500).json({
+      success: false,
+      message: err.message,
+    });
+  }
+};
+
+/* STUDENTS */
+export const getInstituteStudents = async (
+  req,
+  res
+) => {
+  try {
+
+    const students =
+      await getInstituteStudentsService(
+        req.account.id
+      );
+
+    return res.json({
+      success: true,
+      data: students,
+    });
+
+  } catch (err) {
+
+    return res.status(500).json({
+      success: false,
+      message: err.message,
+    });
+
+  }
+};
+
+/* BOOKINGS */
+export const getInstituteBookings = async (
+  req,
+  res
+) => {
+  try {
+
+    const bookings =
+      await getInstituteBookingsService(
+        req.account.id
+      );
+
+    return res.json({
+      success: true,
+      data: bookings,
+    });
+
+  } catch (err) {
+
+    return res.status(500).json({
+      success: false,
+      message: err.message,
+    });
+
+  }
+};
+
+
+
+/* =========================
+   LIST INSTITUTES
+========================= */
+export const listInstitutes = async (
+  req,
+  res
+) => {
+  try {
+    const result =
+      await listInstitutesService(
+        req.query
+      );
+
+    return res.json({
+      success: true,
+      data: result,
+    });
+
+  } catch (err) {
+    return res.status(500).json({
+      success: false,
+      message: err.message,
+    });
+  }
+};
+
+
+  /* =========================
+   ALL INSTITUTES (ADMIN)
+========================= */
+export const getAllInstitutesAdmin =
+  async (req, res) => {
+    try {
+      const institutes =
+        await getAllInstitutesAdminService();
+
+      return res.json({
+        success: true,
+        data: institutes,
+      });
+    } catch (err) {
+      return res.status(500).json({
+        success: false,
+        message: err.message,
+      });
+    }
+  };
+
+// /* =========================
+//    PENDING INSTITUTES
+// ========================= */
+export const getPendingInstitutes =
+  async (req, res) => {
+    try {
+      const institutes =
+        await getAllInstitutesAdminService();
+
+      return res.json({
+        success: true,
+        data: institutes.filter(
+          (i) =>
+            i.approval_status ===
+            "PENDING"
+        ),
+      });
+    } catch (err) {
+      return res.status(500).json({
+        success: false,
+        message: err.message,
+      });
+    }
+  };
+
+/* =========================
+   APPROVED INSTITUTES
+========================= */
+export const getApprovedInstitutes =
+  async (req, res) => {
+    try {
+      const institutes =
+        await getAllInstitutesAdminService();
+
+      return res.json({
+        success: true,
+        data: institutes.filter(
+          (i) =>
+            i.approval_status ===
+            "APPROVED"
+        ),
+      });
+    } catch (err) {
+      return res.status(500).json({
+        success: false,
+        message: err.message,
+      });
+    }
+  };
+
+/* =========================
+   REJECTED INSTITUTES
+========================= */
+export const getRejectedInstitutes =
+  async (req, res) => {
+    try {
+      const institutes =
+        await getAllInstitutesAdminService();
+
+      return res.json({
+        success: true,
+        data: institutes.filter(
+          (i) =>
+            i.approval_status ===
+            "REJECTED"
+        ),
+      });
+    } catch (err) {
+      return res.status(500).json({
+        success: false,
+        message: err.message,
+      });
+    }
+  };
+
+/* =========================
+   APPROVE INSTITUTE
+========================= */
+export const approveInstitute =
+  async (req, res) => {
+    try {
+      const result =
+        await updateInstituteApprovalService(
+          req.params.id,
+          "APPROVED"
+        );
+
+      return res.json({
+        success: true,
+        data: result,
+      });
+    } catch (err) {
+      return res.status(500).json({
+        success: false,
+        message: err.message,
+      });
+    }
+  };
+
+/* =========================
+   REJECT INSTITUTE
+========================= */
+export const rejectInstitute =
+  async (req, res) => {
+    try {
+      const result =
+        await updateInstituteApprovalService(
+          req.params.id,
+          "REJECTED"
+        );
+
+      return res.json({
+        success: true,
+        data: result,
+      });
+    } catch (err) {
+      return res.status(500).json({
+        success: false,
+        message: err.message,
+      });
+    }
+  };
+
+  export const createInstituteByAdmin =
+  async (req, res) => {
+    try {
+      const institute =
+        await createInstituteService(
+          req.admin?.id || 1,
+          req.body
+        );
+
+      return res.status(201).json({
+        success: true,
+        data: institute,
+      });
+
+    } catch (err) {
+
+      return res.status(500).json({
+        success: false,
+        message: err.message,
+      });
+
+    }
 };

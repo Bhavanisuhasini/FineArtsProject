@@ -118,6 +118,8 @@
 
 // export default router;
 
+
+
 import express from "express";
 
 import firebaseAuth  from "../middlewares/firebaseAuth.js";
@@ -135,6 +137,7 @@ import {
   respondToTrainerApplication,
   getClassById,
   getClassesByTrainer,
+  createClassByAdmin,
 } from "../controllers/class.controller.js";
 
 const router = express.Router();
@@ -232,5 +235,22 @@ router.get(
 // NOTE: This is generic, so it must be at the bottom to catch any ID
 // that wasn't matched by specific routes above.
 router.get("/:id", getClassById);
+
+
+/* ---------------- ADMIN ROUTES ---------------- */
+router.post(
+  "/admin/create",
+  createClassByAdmin
+);
+
+router.put(
+  "/admin/:id",
+  updateClass
+);
+
+router.delete(
+  "/admin/:id",
+  deleteClass
+);
 
 export default router;

@@ -629,5 +629,3 @@ const insertSchedule = async (pool, classId, schedule) => {
 
 /* ── getClassesService (legacy — kept for compatibility) ────────────────── */
 export const getClassesService = async (params) => {
-  return listClassesService(params);
-};

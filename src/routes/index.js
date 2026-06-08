@@ -16,6 +16,7 @@ import adminAuthRoutes from "./adminAuth.routes.js";
 import couponRoutes from "./coupon.routes.js";
 import sessionRoutes from "./session.routes.js";
 
+
 // was: import paymentRoutes from "./payment.routes.js";
 import paymentRoutes from "./payment.routes.js";
 
@@ -39,9 +40,7 @@ router.use("/classes", classRoutes);
 // ✅ BOOKING SYSTEM
 router.use("/bookings", bookingRoutes);
 router.use("/sessions", sessionRoutes);
-// ✅ PAYMENTS + EXTRA
-// router.use("/payments", paymentRoutes);
-router.use("/coupons", couponRoutes);
+
 
 // ✅ ADMIN + DASHBOARD
 router.use("/admin", adminRoutes);
