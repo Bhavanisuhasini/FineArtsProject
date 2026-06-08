@@ -1,111 +1,49 @@
-
-
-
-
-
-import { sql, getPool } from "../config/db.js";
+import { getPool, sql } from "../config/db.js";
 
 export const login = async (req, res) => {
   try {
-    const firebaseUser = req.firebaseUser;
-
-    if (!firebaseUser?.uid) {
-      return res.status(401).json({
-        success: false,
-        message: "Firebase user missing. Check Bearer token.",
-      });
-    }
-
-    const uid = firebaseUser.uid;
-    const email = firebaseUser.email || null;
-    const phone_number = firebaseUser.phone_number || null;
-
-    const role = req.body.role?.toUpperCase() || "USER";
-    const allowedRoles = ["USER", "TRAINER", "INSTITUTE", "ADMIN"];
-
-    if (!allowedRoles.includes(role)) {
-      return res.status(400).json({
-        success: false,
-        message: "Invalid role. Use USER, TRAINER, INSTITUTE, or ADMIN",
-      });
-    }
+    const { uid, email, phone } = req.body;
 
     const pool = getPool();
 
+    // ✅ CHECK IF USER EXISTS
     const existing = await pool.request()
-      .input("firebase_uid", sql.NVarChar(255), uid)
-      .query(`
-        SELECT *
-        FROM accounts
-        WHERE firebase_uid = @firebase_uid
-      `);
+      .input("email", sql.VarChar, email)
+      .query("SELECT * FROM accounts WHERE email = @email");
 
-    let account;
-
-    if (existing.recordset.length === 0) {
-      if (role === "ADMIN") {
-        return res.status(403).json({
-          success: false,
-          message: "Admin account cannot be created from login API",
-        });
-      }
-
-      const insertResult = await pool.request()
-        .input("firebase_uid", sql.NVarChar(255), uid)
-        .input("email", sql.NVarChar(255), email)
-        .input("phone_number", sql.NVarChar(20), phone_number)
-        .input("role", sql.NVarChar(50), role)
-        .query(`
-          INSERT INTO accounts
-          (
-            firebase_uid,
-            email,
-            phone_number,
-            role,
-            is_active,
-            is_verified,
-            created_at,
-            updated_at
-          )
-          OUTPUT INSERTED.*
-          VALUES
-          (
-            @firebase_uid,
-            @email,
-            @phone_number,
-            @role,
-            1,
-            1,
-            SYSDATETIME(),
-            SYSDATETIME()
-          )
-        `);
-
-      account = insertResult.recordset[0];
-    } else {
-      account = existing.recordset[0];
+    if (existing.recordset.length > 0) {
+      return res.json({
+        success: true,
+        user: existing.recordset[0],
+      });
     }
 
-    return res.status(200).json({
-      success: true,
-      message: "Login successful",
-      data: account,
-    });
-  } catch (error) {
-    console.error("Login Error:", error);
+    // ✅ INSERT ONLY IF NOT EXISTS
+    const result = await pool.request()
+      .input("uid", sql.VarChar, uid)
+      .input("email", sql.VarChar, email)
+      .input("phone", sql.VarChar, phone)
+      .query(`
+        INSERT INTO accounts (firebase_uid, email, phone, role, is_active)
+        OUTPUT INSERTED.*
+        VALUES (@uid, @email, @phone, 'USER', 1)
+      `);
 
-    return res.status(500).json({
+    res.json({
+      success: true,
+      user: result.recordset[0],
+    });
+
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({
       success: false,
       message: "Login failed",
-      error: error.message,
+      error: err.message,
     });
   }
 };
 
 export const me = async (req, res) => {
-  return res.status(200).json({
-    success: true,
-    message: "Current user fetched successfully",
-    data: req.account,
-  });
+  res.json({ success: true, user: req.user });
 };

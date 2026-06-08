@@ -8,11 +8,24 @@ export const getUserDashboard = async (accountId) => {
     .input("user_id", sql.BigInt, accountId)
     .query(`
       SELECT
-        (SELECT COUNT(*) FROM bookings WHERE user_id = @user_id) AS total_bookings,
-        (SELECT COUNT(*) FROM bookings WHERE user_id = @user_id AND status = 'CONFIRMED'
-          AND start_date >= CAST(GETDATE() AS DATE)) AS upcoming_classes,
-        (SELECT COUNT(*) FROM bookings WHERE user_id = @user_id AND status = 'COMPLETED') AS completed_classes,
-        (SELECT ISNULL(SUM(amount), 0) FROM payments WHERE user_id = @user_id AND status = 'SUCCESS') AS total_payments
+        -- ✅ FIXED: count PENDING + CONFIRMED as active
+        (SELECT COUNT(*) FROM bookings 
+          WHERE user_id = @user_id 
+          AND status IN ('PENDING','CONFIRMED')) AS total_bookings,
+
+        -- ✅ FIXED: removed start_date filter (bookings have NULL start_date)
+        (SELECT COUNT(*) FROM bookings 
+          WHERE user_id = @user_id 
+          AND status IN ('PENDING','CONFIRMED')) AS upcoming_classes,
+
+        (SELECT COUNT(*) FROM bookings 
+          WHERE user_id = @user_id 
+          AND status = 'COMPLETED') AS completed_classes,
+
+        -- payments table may be empty, fall back to bookings amount
+        (SELECT ISNULL(SUM(amount), 0) FROM bookings 
+          WHERE user_id = @user_id 
+          AND status IN ('PENDING','CONFIRMED','COMPLETED')) AS total_payments
     `);
 
   const upcoming = await pool.request()
@@ -24,12 +37,12 @@ export const getUserDashboard = async (accountId) => {
         t.full_name AS trainer_name,
         i.name AS institute_name
       FROM bookings b
-      LEFT JOIN classes c ON b.class_id = c.id
-      LEFT JOIN trainers t ON b.trainer_id = t.id
+      LEFT JOIN classes    c ON b.class_id     = c.id
+      LEFT JOIN trainers   t ON b.trainer_id   = t.id
       LEFT JOIN institutes i ON b.institute_id = i.id
-      WHERE b.user_id = @user_id AND b.status = 'CONFIRMED'
-        AND b.start_date >= CAST(GETDATE() AS DATE)
-      ORDER BY b.start_date ASC
+      WHERE b.user_id = @user_id
+        AND b.status IN ('PENDING', 'CONFIRMED')  -- ✅ FIXED: was only 'CONFIRMED'
+      ORDER BY b.created_at DESC
     `);
 
   return {
@@ -55,8 +68,7 @@ export const getTrainerDashboard = async (accountId) => {
       SELECT
         (SELECT COUNT(*) FROM classes WHERE trainer_id = @trainer_id AND is_active = 1) AS total_classes,
         (SELECT COUNT(DISTINCT user_id) FROM bookings WHERE trainer_id = @trainer_id AND status IN ('CONFIRMED','COMPLETED')) AS total_students,
-        (SELECT COUNT(*) FROM bookings WHERE trainer_id = @trainer_id AND status = 'CONFIRMED'
-          AND start_date >= CAST(GETDATE() AS DATE)) AS upcoming_classes,
+        (SELECT COUNT(*) FROM bookings WHERE trainer_id = @trainer_id AND status IN ('PENDING','CONFIRMED')) AS upcoming_classes,
         (SELECT ISNULL(SUM(amount), 0) FROM bookings WHERE trainer_id = @trainer_id AND status = 'COMPLETED') AS total_earnings
     `);
 
@@ -68,15 +80,19 @@ export const getTrainerDashboard = async (accountId) => {
         c.title AS class_title, c.mode,
         a.phone_number AS student_phone
       FROM bookings b
-      LEFT JOIN classes c ON b.class_id = c.id
-      LEFT JOIN accounts a ON b.user_id = a.id
-      WHERE b.trainer_id = @trainer_id AND b.status = 'CONFIRMED'
-        AND b.start_date >= CAST(GETDATE() AS DATE)
-      ORDER BY b.start_date ASC
+      LEFT JOIN classes  c ON b.class_id = c.id
+      LEFT JOIN accounts a ON b.user_id  = a.id
+      WHERE b.trainer_id = @trainer_id
+        AND b.status IN ('PENDING','CONFIRMED')
+      ORDER BY b.created_at DESC
     `);
 
   return {
-    trainer: { full_name: trainer.full_name, approval_status: trainer.approval_status, is_profile_completed: trainer.is_profile_completed },
+    trainer: {
+      full_name: trainer.full_name,
+      approval_status: trainer.approval_status,
+      is_profile_completed: trainer.is_profile_completed,
+    },
     stats: stats.recordset[0],
     upcoming_classes: upcoming.recordset,
   };
@@ -97,9 +113,9 @@ export const getInstituteDashboard = async (accountId) => {
     .input("institute_id", sql.BigInt, institute.id)
     .query(`
       SELECT
-        (SELECT COUNT(*) FROM trainers WHERE institute_id = @institute_id AND is_active = 1) AS total_trainers,
-        (SELECT COUNT(*) FROM classes WHERE institute_id = @institute_id AND is_active = 1) AS total_classes,
-        (SELECT COUNT(*) FROM bookings WHERE institute_id = @institute_id) AS total_bookings,
+        (SELECT COUNT(*) FROM trainers  WHERE institute_id = @institute_id AND is_active = 1) AS total_trainers,
+        (SELECT COUNT(*) FROM classes   WHERE institute_id = @institute_id AND is_active = 1) AS total_classes,
+        (SELECT COUNT(*) FROM bookings  WHERE institute_id = @institute_id) AS total_bookings,
         (SELECT ISNULL(SUM(amount), 0) FROM bookings WHERE institute_id = @institute_id AND status = 'COMPLETED') AS total_revenue
     `);
 
@@ -111,8 +127,8 @@ export const getInstituteDashboard = async (accountId) => {
         c.title AS class_title,
         a.phone_number AS student_phone
       FROM bookings b
-      LEFT JOIN classes c ON b.class_id = c.id
-      LEFT JOIN accounts a ON b.user_id = a.id
+      LEFT JOIN classes  c ON b.class_id = c.id
+      LEFT JOIN accounts a ON b.user_id  = a.id
       WHERE b.institute_id = @institute_id
       ORDER BY b.created_at DESC
     `);
@@ -130,13 +146,13 @@ export const getAdminDashboard = async () => {
 
   const stats = await pool.request().query(`
     SELECT
-      (SELECT COUNT(*) FROM accounts WHERE role = 'USER') AS total_users,
+      (SELECT COUNT(*) FROM accounts  WHERE role = 'USER') AS total_users,
       (SELECT COUNT(*) FROM trainers) AS total_trainers,
       (SELECT COUNT(*) FROM institutes) AS total_institutes,
-      (SELECT COUNT(*) FROM classes WHERE is_active = 1) AS total_classes,
+      (SELECT COUNT(*) FROM classes   WHERE is_active = 1) AS total_classes,
       (SELECT COUNT(*) FROM bookings) AS total_bookings,
       (SELECT ISNULL(SUM(amount), 0) FROM payments WHERE status = 'SUCCESS') AS total_revenue,
-      (SELECT COUNT(*) FROM trainers WHERE approval_status = 'PENDING') AS pending_trainers,
+      (SELECT COUNT(*) FROM trainers  WHERE approval_status = 'PENDING') AS pending_trainers,
       (SELECT COUNT(*) FROM institutes WHERE approval_status = 'PENDING') AS pending_institutes
   `);
 

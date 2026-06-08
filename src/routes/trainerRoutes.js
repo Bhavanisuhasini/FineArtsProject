@@ -18,7 +18,7 @@ import {
   deleteTrainerByInstitute,
 } from "../controllers/trainer.controller.js";
 
-import { firebaseAuth } from "../middlewares/firebaseAuth.js";
+import firebaseAuth  from "../middlewares/firebaseAuth.js";
 import { accountAuth } from "../middlewares/accountAuth.js";
 import { adminAuth } from "../middlewares/adminAuth.js";
 import { upload } from "../middlewares/s3Upload.js";
